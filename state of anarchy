@@ -1,0 +1,6416 @@
+
+
+
+local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+
+local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+
+local Window = Library:CreateWindow({
+    Title = 'Hollowed || https://discord.gg/QRTXUaDNMm',
+    Center = true,
+    AutoShow = true,
+    TabPadding = 8,
+    MenuFadeTime = 0.2
+})
+
+
+
+local Players = game:GetService('Players')
+local ReplicatedStorage = game:GetService('ReplicatedStorage')
+local RunService = game:GetService('RunService')
+local UserInputService = game:GetService('UserInputService')
+local Workspace = game:GetService('Workspace')
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local CurrentCamera = Workspace.CurrentCamera
+
+
+local Tabs = {
+    SilentAim = Window:AddTab('Silent Aim'),
+    Aimbot = Window:AddTab('Aimbot'),
+    Visuals = Window:AddTab('Visuals'),
+    Misc = Window:AddTab('Misc'),
+    World = Window:AddTab('World'),
+    ['UI Settings'] = Window:AddTab('UI Settings'),
+}
+
+
+
+
+
+
+
+
+
+
+local silentleftgroup = Tabs.SilentAim:AddLeftGroupbox('Main')
+local silentleftaltgroup = Tabs.SilentAim:AddLeftGroupbox('Visuals')
+
+local silentrightgroup = Tabs.SilentAim:AddRightGroupbox('Gun Mods')
+local silentrightaltgroup = Tabs.SilentAim:AddRightGroupbox('Target Info')
+
+local visualsleftgroup = Tabs.Visuals:AddLeftGroupbox('Player')
+local visualsleftaltgroup = Tabs.Visuals:AddLeftGroupbox('Viewmodel')
+local visualsleftaltaltgroup = Tabs.Visuals:AddLeftGroupbox('Crosshair')
+
+local visualsrightgroup = Tabs.Visuals:AddRightGroupbox('Crates')
+local visualsrightmidgroup = Tabs.Visuals:AddRightGroupbox('Effects')
+
+
+local miscleftgroup = Tabs.Misc:AddLeftGroupbox('Player')
+
+local miscrightgroup = Tabs.Misc:AddRightGroupbox('Perks')
+
+local worldleftgroup = Tabs.World:AddLeftGroupbox('World')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local Players = game:GetService('Players')
+local ReplicatedStorage = game:GetService('ReplicatedStorage')
+local RunService = game:GetService('RunService')
+local UserInputService = game:GetService('UserInputService')
+local Workspace = game:GetService('Workspace')
+local Lighting = game:GetService("Lighting")
+
+
+
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+
+local realVelocity = HumanoidRootPart.Velocity
+local fakeVelocity = Vector3.new(0, 0, 0)
+
+
+local oldIndexHook
+oldIndexHook = hookmetamethod(game, "__index", function(t, k)
+    if t == HumanoidRootPart and k == "Velocity" then
+        return fakeVelocity
+    end
+    return oldIndexHook(t, k)
+end)
+
+
+HumanoidRootPart:GetPropertyChangedSignal("Velocity"):Connect(function()
+    realVelocity = HumanoidRootPart.Velocity
+end)
+
+
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    Character = newCharacter
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+    realVelocity = HumanoidRootPart.Velocity
+
+    HumanoidRootPart:GetPropertyChangedSignal("Velocity"):Connect(function()
+        realVelocity = HumanoidRootPart.Velocity
+    end)
+end)
+
+
+
+
+local Config = {
+    SilentAim = false,
+    WallCheck = false,
+    Hitchance = 100,           
+    NoSpread = false,
+    instaHit = false,
+    RandomizeHitPart = false, 
+    AutoFire = false,
+    Prediction = false,
+    BulletSpeed = 4250,
+    MaxDistance = 1000,
+    TargetPart = "Head",      
+    TargetParts = {           
+        "Head",
+        "UpperTorso",
+        "LowerTorso",
+        "LeftUpperArm", "LeftLowerArm", "LeftHand",
+        "RightUpperArm", "RightLowerArm", "RightHand",
+        "LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+        "RightUpperLeg", "RightLowerLeg", "RightFoot"
+    },
+
+    FOVCircleRadius = 200,
+    FOVCircleColor = Color3.fromRGB(255, 255, 255),
+    FOVCircleThickness = 1,
+    FOVCircleNumSides = 100,
+    FOVCircleFilled = false,
+    FOVCircleTransparency = 1,
+    FOVCircleVisible = false,
+    FOVCircleDynamic = false,
+
+    SnapLineThickness = 1,
+    SnapLineVisible = false,
+    SnapLineTransparency = 1,
+    SnapLineColor = Color3.fromRGB(255, 255, 255),
+
+    HighlightEnabled = false, 
+    HighlightColor = Color3.fromRGB(255, 0, 0), 
+    HighlightFillTransparency = 0.75, 
+    HighlightOutlineTransparency = 0, 
+    HighlightOutlineColor = Color3.fromRGB(255, 25, 1),
+
+        
+    TargetInfoEnabled = true,
+    TargetInfoColor = Color3.fromRGB(255, 255, 255),
+    
+    
+    TargetInfoPosition = Vector2.new(Workspace.CurrentCamera.ViewportSize.X / 2, Workspace.CurrentCamera.ViewportSize.Y - 300),
+    TargetInfoSize = 18,
+    TargetInfoFont = 2,
+    TargetInfoName = true,   
+    TargetInfoHealth = true, 
+    TargetInfoAdmin = true,
+    TargetInfoVisible = true,
+    
+    Enabled = false,
+    Material = Enum.Material.Neon, 
+    Color = Color3.fromRGB(255, 0, 0), 
+    Transparency = 0,
+
+    TracersVisible = true,
+    TracersTexture = "rbxassetid://7151778302",
+    TracersLifetime = 5,
+    TracersColor = Color3.fromRGB(255,255,255),
+
+    
+    
+    
+
+    Gravity = true,
+    GravityValue = 190,
+
+    nofog = true,
+    NoLeaves = false,
+
+    adminNotify = false,
+
+    WalkSpeedEnabled = false,
+    WalkSpeed = 25,
+
+    JumpPowerEnabled = false,
+    JumpPower = 25,
+
+    flySpeed = 25,
+    flying = false,
+
+    noclip = false,
+
+    cratedistancetext = false,
+    cratetextsize = 9,
+    cratemaxdistance = 1000,
+
+    corpsemaxdistance = 500,
+    showCorpses = false,
+    corpseTextColor = Color3.fromRGB(255,255,255),
+    corpseTextSize = 9,
+    corpsetextoutline = false,
+
+    ZoomEnabled = false,
+    ZoomValue = 40,
+
+    fullbrightEnabled = false,
+
+    ExtractEnabled = true,
+    ExtractEnabledTextSize = 13,
+    ExtractColor = Color3.fromRGB(255, 255, 0),
+    ExtractCenter = true,
+    ExtractOutline = true,
+    ExtractOutlineColor = Color3.fromRGB(0, 0, 0),
+    ExtractMaxDistance = 500,
+}
+
+
+
+
+
+
+local settings = {
+    boxoutlineVisible = false,
+    Boxoutlinecolor = Color3.fromRGB(0, 0, 0),
+    boxoutlineThickness = 3,
+    boxoutlineFilled = false,
+    
+    boxVisible = true,
+    boxColor = Color3.fromRGB(255, 255, 255), 
+    boxThickness = 1,
+
+    boxfilledVisible = false,
+    boxfilledColor = Color3.fromRGB(255, 255, 255),
+    boxfilledThickness = 1,
+    boxfilledTransparency = 0.4,
+    boxfilledFilled = true,
+
+    nametagVisible = false,
+    nametagCenter = true,
+    nametagColor = Color3.fromRGB(255, 255, 255), 
+    nametagSize = 12,
+    nametagOutline = true,
+    nametagFont = 1,
+
+    distanceTextVisible = false,
+    distanceTextCenter = true,
+    distanceTextColor = Color3.fromRGB(255, 255, 255), 
+    distanceTextSize = 12,
+    distanceTextOutline = true,
+    distanceTextFont = 1,
+
+    weaponTextVisible = false,
+    weaponTextCenter = true,
+    weaponTextColor = Color3.fromRGB(255, 255, 255), 
+    weaponTextSize = 12,
+    weaponTextOutline = true,
+    weaponTextFont = 1, 
+
+    healthBarOutlineVisible = false,
+    healthBarOutlineColor = Color3.fromRGB(0, 0, 0),
+    healthBarOutlineThickness = 3,
+    healthBarVisible = false,
+    healthBarColor = Color3.fromRGB(0, 255, 0),
+    healthBarThickness = 1,
+
+    healthbartextvisible = false,
+    healthbartextcenter = true,
+    healthbartextcolor = Color3.fromRGB(255, 255, 255),
+    healthbartextsize = 9,
+    healthbartextoutline = true,
+    healthbartextfont = 1,
+
+    maxDistance = 123123,
+
+    arrowvisible = true,
+    arrowcolor = Color3.fromRGB(255,255,255),
+    arrowdistFromCenter = 80,
+    arrowtriangleHeight = 16,
+    arrowriangleWidth = 16,
+    arrowtriangleFilled = true,
+    arrowtriangleTransparency = 0,
+
+}
+
+
+local CrosshairConfig = {
+    Enabled = true,
+    Length = 8,
+    Gap = 5,
+    RotationSpeed = math.rad(60), 
+    AlwaysRotate = true,
+    DynamicOscillation = true,
+    OscillationAmplitude = 4,
+    OscillationSpeed = 2,
+    UseBarrelDirection = false, 
+    Color = Color3.fromRGB(255, 255, 255),
+    ShadowColor = Color3.new(0, 0, 0),
+    Thickness = 1,
+    ShadowThickness = 3,
+    ZIndex = 2,
+}
+
+
+
+
+
+local perksconfig = {
+    Deadshot = false,
+    DoubleTap = false,
+    ElectricCherry = false,
+    Juggernog = false,
+    MuleKick = false,
+    PHDFlopper = false,
+    QuickRevive = false,
+    SpeedCola = false,
+    StaminUp = false,
+    Tombstone = false,
+    VultureAid = false,
+    WhosWho = false,
+    WidowsWine = false,
+}
+
+
+
+local TracerTextures = {
+    ["1"] = "rbxassetid://7136858729",
+    ["2"] = "rbxassetid://6333823534",
+    ["3"] = "rbxassetid://5864341017",
+    ["4"] = "rbxassetid://9150663556",
+    ["5"] = "rbxassetid://446111271",
+    ["6"] = "rbxassetid://2950987173",
+    ["7"] = "rbxassetid://7151778302",
+    ["8"] = "rbxassetid://11226108137",
+    ["9"] = "rbxassetid://6511613786",
+}
+
+
+
+local sfx = {
+
+    ["Bameware"] = "3124331820",
+    ["Skeet"] = "4753603610",
+    ["Bonk"] = "3765689841",
+    ["Lazer Beam"] = "130791043",
+    ["Windows XP Error"] = "160715357",
+    ["TF2 Hitsound"] = "3455144981",
+    ["TF2 Critical"] = "296102734",
+    ["TF2 Bat"] = "3333907347",
+    ['Bow Hit'] = "1053296915",
+    ['Bow'] = "3442683707",
+    ['OSU'] = "7147454322",
+    ['Minecraft Hit'] = "4018616850",
+    ['Steve'] = "5869422451",
+    ['1nn'] = "7349055654",
+    ['Rust'] = "3744371091",
+    ["TF2 Pan"] = "3431749479",
+    ["Neverlose"] = "8679627751",
+    ["Mario"] = "5709456554",
+
+}
+
+
+local skyboxes = {
+    ["Normal"] = {600886090,600830446,600831635,600832720,600833862,600835177},
+    ["DoomSpire"] = {6050649245,6050664592,6050648475,6050644331,6050649718,6050650083},
+    ["CatGirl"] = {444167615,444167615,444167615,444167615,444167615,444167615},
+    ["Vibe"] = {1417494402,1417494030,1417494146,1417494253,1417494499,1417494643},
+    ["Blue Aurora"] = {12063984,12064107,12064152,12064121,12064115,12064131},
+    ["Purple Clouds"] = {151165191,151165214,151165197,151165224,151165206,151165227},
+    ["Purple Nebula"] = {159454286,159454299,159454296,159454293,159454300,159454288},
+    ["Twighlight"] = {264909758,264908339,264907909,264909420,264908886,264907379},
+    ["Vivid Skies"] = {271042310,271042516,271077243,271042556,271042467,271077958},
+    ["Purple and Blue"] = {149397684,149397692,149397686,149397697,149397688,149397702},
+}
+
+
+
+local visibleContainers = {
+    ["511 Tactical Transport Crate T1"] = false,
+    ["511 Tactical Transport Crate T2"] = false,
+    ["511 Tactical Transport Crate T3"] = false,
+    ["Cardboard Box"] = false,
+    ["Cult Crate"] = false,
+    ["Cult Chest"] = false,
+    ["Eastern Civilian Rifle Case T1"] = false,
+    ["Eastern Civilian Rifle Case T2"] = false,
+    ["Eastern Civilian Rifle Case T3"] = false,
+    ["OMON Equipment Crate T1"] = false,
+    ["OMON Equipment Crate T2"] = false,
+    ["RUAF Surplus Crate T1"] = false,
+    ["RUAF Surplus Crate T2"] = false,
+    ["RUAF Surplus Crate T3"] = false,
+    ["RUAF Surplus Crate T4"] = false,
+    ["RUAF Surplus Crate T5"] = false,
+    ["Conductor Lock Box"] = false,
+    ["Conductor Private Lock Box"] = false,
+    ["Aegis Weapon Testing Wing Storage Crate"] = false,
+    ["Equipment Supply Drop"] = false,
+    ["Evidence Box"] = false,
+    ["MRE Container"] = false,
+    ["Treasure Box"] = false,
+    ["Utility Supply Drop"] = false,
+    ["Weapon Supply Drop"] = false,
+    ["Weapon Supply Drop T5"] = false,
+    ["Weapons & Modifications Supply Drop"] = false,
+    ["Filthy Toilet Tank"] = false,
+    ["HMS Seaturtle Black Market Cargo"] = false,
+    ["Kitchen Cabinet"] = false,
+    ["Long Crate"] = false,
+    ["Medical Shipping Crate"] = false,
+    ["Medical Supply Drop"] = false,
+    ["Mystery Box"] = false,
+    ["NATO Rifle Case T3"] = false,
+    ["Pillow Cover"] = false,
+    ["Shipping Crate"] = false,
+    ["Toolbox"] = false,
+    ["Weapon Modification Crate"] = false,
+    ["Weapon Modification Crate T6"] = false,
+    ["ZSU Surplus Crate T5"] = false,
+    ["ZSU Surplus Crate T6"] = false,
+}
+
+
+local containerColors = {
+    ["Cardboard Box"] = Color3.fromRGB(200, 200, 200),
+    ["Cult Crate"] = Color3.fromRGB(128, 0, 128),
+    ["Eastern Civilian Rifle Case T1"] = Color3.fromRGB(0, 102, 204),
+    ["Eastern Civilian Rifle Case T2"] = Color3.fromRGB(0, 102, 204),
+    ["Eastern Civilian Rifle Case T3"] = Color3.fromRGB(0, 102, 204),
+    ["Equipment Supply Drop"] = Color3.fromRGB(255, 128, 0),
+    ["Evidence Box"] = Color3.fromRGB(255, 0, 0),
+    ["Filthy Toilet Tank"] = Color3.fromRGB(102, 51, 0),
+    ["HMS Seaturtle Black Market Cargo"] = Color3.fromRGB(0, 0, 0),
+    ["Kitchen Cabinet"] = Color3.fromRGB(160, 82, 45),
+    ["Long Crate"] = Color3.fromRGB(128, 128, 0),
+    ["Medical Shipping Crate"] = Color3.fromRGB(0, 255, 255),
+    ["Medical Supply Drop"] = Color3.fromRGB(0, 204, 102),
+    ["Mystery Box"] = Color3.fromRGB(255, 255, 0),
+    ["NATO Rifle Case T3"] = Color3.fromRGB(0, 153, 255),
+    ["Pillow Cover"] = Color3.fromRGB(255, 192, 203),
+    ["Shipping Crate"] = Color3.fromRGB(160, 160, 160),
+    ["Toolbox"] = Color3.fromRGB(255, 69, 0),
+    ["Weapon Modification Crate"] = Color3.fromRGB(100, 100, 255),
+    ["Weapon Modification Crate T6"] = Color3.fromRGB(0, 0, 255),
+    ["ZSU Surplus Crate T5"] = Color3.fromRGB(100, 255, 100),
+    ["ZSU Surplus Crate T6"] = Color3.fromRGB(0, 255, 0),
+    ["511 Tactical Transport Crate T1"] = Color3.fromRGB(255, 170, 0),
+    ["Cult Chest"] = Color3.fromRGB(139, 0, 139),
+    ["MRE Container"] = Color3.fromRGB(205, 133, 63),
+    ["Treasure Box"] = Color3.fromRGB(255, 215, 0),
+    ["Utility Supply Drop"] = Color3.fromRGB(0, 255, 150),
+    ["Weapon Supply Drop"] = Color3.fromRGB(255, 85, 85),
+    ["Weapon Supply Drop T5"] = Color3.fromRGB(200, 0, 0),
+    ["Weapons & Modifications Supply Drop"] = Color3.fromRGB(75, 0, 130),
+    ["511 Tactical Transport Crate T2"] = Color3.fromRGB(255, 150, 0),
+    ["511 Tactical Transport Crate T3"] = Color3.fromRGB(255, 130, 0),
+    ["OMON Equipment Crate T1"] = Color3.fromRGB(80, 80, 160),
+    ["OMON Equipment Crate T2"] = Color3.fromRGB(60, 60, 140),
+    ["RUAF Surplus Crate T1"] = Color3.fromRGB(100, 200, 100),
+    ["RUAF Surplus Crate T2"] = Color3.fromRGB(90, 180, 90),
+    ["RUAF Surplus Crate T3"] = Color3.fromRGB(80, 160, 80),
+    ["RUAF Surplus Crate T4"] = Color3.fromRGB(70, 140, 70),
+    ["RUAF Surplus Crate T5"] = Color3.fromRGB(60, 120, 60),
+    ["Conductor Lock Box"] = Color3.fromRGB(255, 255, 150),
+    ["Conductor Private Lock Box"] = Color3.fromRGB(255, 220, 100),
+    ["Aegis Weapon Testing Wing Storage Crate"] = Color3.fromRGB(150, 100, 255),
+}
+
+
+
+
+
+
+
+
+local AdminList = {
+    "mmmm6666b", "RevolutionaryTea", "VictorReznov345",
+    "samyoungpeppersauce", "Worldsinge", "Elyeuss",
+    "QuietQuacksSleepWell", "jo1tickitsune", "DrSchneeplestein",
+    "GothZelia", "Aphache_Pilot", "cr1m3t4x1",
+    "Skuulhaf", "Worldsinge", "DekkyPog",
+    "Raging_EpsiIon", "rylexzv", "IChristinsonI",
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local LocalPlayer = Players.LocalPlayer
+local CurrentCamera = Workspace.CurrentCamera
+
+local FOVCircle
+local TargetInfoText
+
+Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    CurrentCamera = Workspace.CurrentCamera
+end)
+
+
+local function passedHitchance(percent)
+    return math.random(0, 100) <= percent
+end
+
+
+local function getClosestTarget()
+    local mousePos = UserInputService:GetMouseLocation()
+    local closest = nil
+    local bestDistance = Config.MaxDistance
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local root = player.Character.HumanoidRootPart
+            local screenPos, onScreen = CurrentCamera:WorldToViewportPoint(root.Position)
+            if onScreen and screenPos.Z > 0 then
+                local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                if dist < bestDistance then
+                    if Config.WallCheck then
+                        local rayParams = RaycastParams.new()
+                        rayParams.FilterDescendantsInstances = {player.Character, LocalPlayer.Character}
+                        rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                        rayParams.IgnoreWater = true
+                        local result = Workspace:Raycast(CurrentCamera.CFrame.Position, (root.Position - CurrentCamera.CFrame.Position), rayParams)
+                        if result and not result.Instance:IsDescendantOf(player.Character) then
+                            continue
+                        end
+                    end
+                    bestDistance = dist
+                    closest = player
+                end
+            end
+        end
+    end
+    return closest
+end
+
+
+
+
+
+local currentTarget = nil
+task.spawn(function()
+    while true do
+        currentTarget = getClosestTarget()
+        task.wait(0.1)
+    end
+end)
+
+
+
+
+
+
+local function getTargetPart(character)
+    if Config.RandomizeHitPart then
+        local parts = {}
+        for _, name in ipairs(Config.TargetParts) do
+            local part = character:FindFirstChild(name)
+            if part then table.insert(parts, part) end
+        end
+        if #parts == 0 then return nil end
+        return parts[math.random(1, #parts)]
+    else
+        return character:FindFirstChild(Config.TargetPart)
+    end
+end
+
+
+local function createFOVCircle()
+    FOVCircle = Drawing.new("Circle")
+    FOVCircle.Thickness = Config.FOVCircleThickness
+    FOVCircle.NumSides = Config.FOVCircleNumSides
+    FOVCircle.Filled = Config.FOVCircleFilled
+    FOVCircle.Transparency = Config.FOVCircleTransparency
+
+    RunService.RenderStepped:Connect(function()
+    local mouse = UserInputService:GetMouseLocation()
+    FOVCircle.Position = Vector2.new(mouse.X, mouse.Y)
+        if Config.FOVCircleDynamic then
+            if currentTarget then
+                local root = currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local dist = (CurrentCamera.CFrame.Position - root.Position).Magnitude
+                    FOVCircle.Radius = math.clamp(dist * 0.5, 50, 700)
+                end
+            end
+        else
+            FOVCircle.Radius = Config.FOVCircleRadius
+        end
+        FOVCircle.Visible = Config.FOVCircleVisible
+        FOVCircle.Color = Config.FOVCircleColor
+    end)
+end
+
+
+
+
+
+
+local TargetInfoText
+
+local function isAdmin(player)
+    for _, adminName in ipairs(AdminList) do
+        if player.Name == adminName then
+            return true
+        end
+    end
+    return false
+end
+
+local TargetInfoText = Drawing.new("Text")
+TargetInfoText.Visible = Config.TargetInfoEnabled
+TargetInfoText.Color = Config.TargetInfoColor
+TargetInfoText.Size = Config.TargetInfoSize
+TargetInfoText.Center = true
+TargetInfoText.Outline = true
+TargetInfoText.Font = Config.TargetInfoFont
+
+RunService.RenderStepped:Connect(function()
+    if Config.TargetInfoEnabled then
+        if currentTarget and currentTarget.Character and currentTarget.Character:FindFirstChild("Humanoid") then
+            local infoParts = {}
+
+            if Config.TargetInfoName then
+                table.insert(infoParts, currentTarget.Name)
+            end
+
+            if Config.TargetInfoHealth then
+                local hp = math.floor(currentTarget.Character.Humanoid.Health)
+                table.insert(infoParts, "HP: " .. hp)
+            end
+
+            if Config.TargetInfoAdmin then
+                local isAdminText = isAdmin(currentTarget) and "[ADMIN]" or "[USER]"
+                table.insert(infoParts, isAdminText)
+            end
+
+            if Config.TargetInfoVisible and currentTarget.Character:FindFirstChild("HumanoidRootPart") then
+                local rayParams = RaycastParams.new()
+                rayParams.FilterDescendantsInstances = {currentTarget.Character, LocalPlayer.Character}
+                rayParams.FilterType = Enum.RaycastFilterType.Exclude
+                local result = Workspace:Raycast(CurrentCamera.CFrame.Position, (currentTarget.Character.HumanoidRootPart.Position - CurrentCamera.CFrame.Position), rayParams)
+                local visible = result == nil or result.Instance:IsDescendantOf(currentTarget.Character)
+                table.insert(infoParts, visible and "[VISIBLE]" or "[NOT VISIBLE]")
+            end
+
+            TargetInfoText.Text = table.concat(infoParts, " | ")
+            TargetInfoText.Position = Config.TargetInfoPosition
+            TargetInfoText.Size = Config.TargetInfoSize
+            TargetInfoText.Color = Config.TargetInfoColor
+            TargetInfoText.Visible = true
+        else
+            TargetInfoText.Visible = false
+        end
+    else
+        TargetInfoText.Visible = false
+    end
+end)
+
+
+
+
+
+local function createTracer(origin, destination)
+    local part1 = Instance.new("Part")
+    part1.Anchored = true
+    part1.CanCollide = false
+    part1.Transparency = 1
+    part1.Size = Vector3.new(0.1, 0.1, 0.1)
+    part1.CFrame = CFrame.new(origin)
+    part1.Parent = workspace
+
+    local part2 = Instance.new("Part")
+    part2.Anchored = true
+    part2.CanCollide = false
+    part2.Transparency = 1
+    part2.Size = Vector3.new(0.1, 0.1, 0.1)
+    part2.CFrame = CFrame.new(destination)
+    part2.Parent = workspace
+
+    local att0 = Instance.new("Attachment", part1)
+    local att1 = Instance.new("Attachment", part2)
+
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = att0
+    beam.Attachment1 = att1
+    beam.FaceCamera = true
+    beam.Texture = Config.TracersTexture
+    beam.TextureLength = Config.TracersLifetime
+    beam.TextureMode = Enum.TextureMode.Wrap
+    
+    beam.Color = ColorSequence.new(Config.TracersColor)
+    beam.Width0 = 1
+    beam.Width1 = 1
+    beam.Transparency = NumberSequence.new(0)
+    beam.Parent = workspace
+
+    game:GetService("Debris"):AddItem(beam, Config.TracersLifetime)
+    game:GetService("Debris"):AddItem(part1, Config.TracersLifetime)
+    game:GetService("Debris"):AddItem(part2, Config.TracersLifetime)
+end
+
+
+
+
+local function checkinfov()
+    local mouse = UserInputService:GetMouseLocation()
+        if currentTarget and currentTarget.Character then
+            local root = currentTarget.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                local screenPos, onScreen = CurrentCamera:WorldToViewportPoint(root.Position)
+                if onScreen then
+                    
+                    local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                    if distance <= Config.FOVCircleRadius then
+                        return true
+                    else
+                        return false
+                    end
+                end
+            end
+        end
+end
+
+
+local function createSnapLine()
+    local SnapLine = Drawing.new("Line")
+    SnapLine.Thickness = Config.SnapLineThickness
+    SnapLine.Transparency = Config.SnapLineTransparency
+
+    RunService.RenderStepped:Connect(function()
+        local mouse = UserInputService:GetMouseLocation()
+
+        if currentTarget and currentTarget.Character and checkinfov() then
+            local root = currentTarget.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                local screenPos, onScreen = CurrentCamera:WorldToViewportPoint(root.Position)
+                if onScreen then
+                    SnapLine.From = Vector2.new(mouse.X, mouse.Y)
+                    SnapLine.To = Vector2.new(screenPos.X, screenPos.Y)
+                    SnapLine.Visible = Config.SnapLineVisible
+                    SnapLine.Color = Config.SnapLineColor
+                    return
+                end
+            end
+        end
+
+        SnapLine.Visible = false
+    end)
+end
+
+
+
+
+local function initSilentAim(Library)
+    local bulletModule = nil
+
+
+
+    local function hook()
+        if bulletModule then
+            local Bullet = require(bulletModule)
+            local oldNew = Bullet.new
+
+            Bullet.new = function(...)
+            local args = {...}
+            local origin = args[1]
+
+            if not currentTarget then
+                return oldNew(unpack(args))
+            end
+
+            local part = getTargetPart(currentTarget.Character)
+            if not part then
+                return oldNew(unpack(args))
+            end
+
+            local spoofDirection
+            if Config.Prediction then
+                local velocity = part.Velocity or Vector3.zero
+                local distance = (part.Position - origin).Magnitude
+                local bulletSpeed = Config.BulletSpeed
+                local travelTime = distance / bulletSpeed
+                local predictedPosition = part.Position + velocity * travelTime
+                spoofDirection = (predictedPosition - origin).Unit
+            else
+                spoofDirection = (part.Position - origin).Unit
+            end
+
+            if Config.TracersVisible then
+                if Config.SilentAim then
+
+                createTracer(origin, origin + spoofDirection * 10000)
+                else
+                createTracer(origin, args[2] * 10000)
+
+                end
+            
+            end
+
+            if Config.SilentAim and passedHitchance(Config.Hitchance) and checkinfov() then
+                args[2] = spoofDirection * 10000 
+
+                if Config.instaHit then
+                    if type(args[8]) == "table" then
+                        args[8][5] = 99999 
+                    end
+                end
+
+
+                if Config.NoSpread then
+                    args[3] = Vector3.zero
+                end
+
+            end
+            return oldNew(unpack(args))
+        end
+
+        end
+    end
+
+    local function findModule()
+    if LocalPlayer.Character then
+        local fw = LocalPlayer.Character:FindFirstChild("ClientFramework")
+                if fw then
+                bulletModule = fw:FindFirstChild("BulletModule")
+                if bulletModule then
+                    hook() 
+                end
+            end
+        end
+    end
+
+    LocalPlayer.CharacterAdded:Connect(function()
+        repeat task.wait() until LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("ClientFramework")
+        task.wait(0.1) 
+        findModule()
+    end)
+
+    LocalPlayer.CharacterAdded:Connect(findModule)
+    if LocalPlayer.Character then 
+        findModule() 
+    end
+
+    return hook
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local function initAutoFire()
+    local mouseDown = false
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+
+    RunService.RenderStepped:Connect(function()
+        if not Config.AutoFire then return end
+
+        local root = currentTarget.Character:FindFirstChild("HumanoidRootPart")
+        if currentTarget and currentTarget.Character.Humanoid.Health > 0 then
+            local screenPos, onScreen = CurrentCamera:WorldToViewportPoint(root.Position)
+            local mouse = UserInputService:GetMouseLocation()
+            local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+            if not mouseDown and distance <= Config.FOVCircleRadius then
+                mouseDown = true
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                task.wait(0.2)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                mouseDown = false
+            end
+        end
+    end)
+end
+
+
+
+
+
+
+
+
+local currentHighlight = Instance.new("Highlight")
+currentHighlight.Enabled = false
+currentHighlight.Parent = game:GetService("CoreGui")
+currentHighlight.Adornee = nil
+
+RunService.RenderStepped:Connect(function()
+    if Config.HighlightEnabled and currentTarget and currentTarget.Character then
+        local root = currentTarget.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local screenPos, onScreen = CurrentCamera:WorldToViewportPoint(root.Position)
+            if onScreen then
+                local mouse = UserInputService:GetMouseLocation()
+                local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                if distance <= Config.FOVCircleRadius then
+                    currentHighlight.Adornee = currentTarget.Character
+                    currentHighlight.FillColor = Config.HighlightColor
+                    currentHighlight.OutlineColor = Config.HighlightOutlineColor
+                    currentHighlight.FillTransparency = Config.HighlightFillTransparency
+                    currentHighlight.OutlineTransparency = Config.HighlightOutlineTransparency
+                    currentHighlight.Enabled = true
+                    return
+                end
+            end
+        end
+    end
+
+    
+    currentHighlight.Enabled = false
+end)
+
+
+
+
+
+
+
+
+LocalPlayer.CharacterAdded:Connect(function()
+	findModule()
+	hook()
+end)
+
+
+local function init()
+    createFOVCircle()
+    createSnapLine()
+    local hook = initSilentAim(Library)
+    hook()
+    LocalPlayer.CharacterAdded:Connect(hook)
+    initAutoFire()
+end
+
+init()
+
+
+
+
+
+
+
+
+
+
+local function ToRot(angleRad)
+    return Vector2.new(math.cos(angleRad), math.sin(angleRad))
+end
+
+local function Round(v)
+    return Vector2.new(math.floor(v.X + 0.5), math.floor(v.Y + 0.5))
+end
+
+
+local function newLine(zIndex)
+    local line = Drawing.new("Line")
+    line.Visible = true
+    line.ZIndex = zIndex
+    return line
+end
+
+
+local CrosshairLines = {}
+for i = 1, 4 do
+    table.insert(CrosshairLines, { newLine(CrosshairConfig.ZIndex), newLine(CrosshairConfig.ZIndex - 1) })
+end
+
+
+local function getDynamicBarrelPosition()
+    local character = game.Players.LocalPlayer.Character
+    if not character then return nil end
+
+    
+    for _, rig in ipairs(workspace.Ignore.Rigs:GetChildren()) do
+        if rig:FindFirstChild("GunParts") then
+            local body = rig.GunParts:FindFirstChild("Body")
+           if body then
+                return body.Position, body.CFrame.LookVector
+            end
+        end
+    end
+
+    return nil
+end
+
+
+
+RunService.RenderStepped:Connect(function()
+    if not CrosshairConfig.Enabled then
+        for _, pair in pairs(CrosshairLines) do
+            pair[1].Visible = false
+            pair[2].Visible = false
+        end
+        return
+    end
+
+    local position
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {workspace.Ignore}
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    rayParams.IgnoreWater = true
+
+    if CrosshairConfig.UseBarrelDirection then
+        local origin, direction = getDynamicBarrelPosition()
+        if origin and direction then
+            local result = workspace:Raycast(origin, direction * 9999, rayParams)
+            if result then
+                local screenPos, onScreen = CurrentCamera:WorldToViewportPoint(result.Position)
+                if onScreen then
+                    position = Vector2.new(screenPos.X, screenPos.Y)
+                end
+            end
+        end
+    end
+    position = position or UserInputService:GetMouseLocation()
+    
+
+    local time = tick()
+    local rotation = CrosshairConfig.AlwaysRotate and time * CrosshairConfig.RotationSpeed or 0
+    local dynamicGap = CrosshairConfig.Gap + (CrosshairConfig.DynamicOscillation and math.sin(time * CrosshairConfig.OscillationSpeed) * CrosshairConfig.OscillationAmplitude or 0)
+
+    for i = 1, 4 do
+        local angle = rotation + math.rad(90 * (i - 1))
+        local dir = ToRot(angle)
+
+        local from = Round(position + dir * dynamicGap)
+        local to = Round(position + dir * (dynamicGap + CrosshairConfig.Length))
+
+        local line = CrosshairLines[i][1]
+        line.From = from
+        line.To = to
+        line.Color = CrosshairConfig.Color
+        line.Thickness = CrosshairConfig.Thickness
+        line.Visible = true
+
+        local shadow = CrosshairLines[i][2]
+        shadow.From = from
+        shadow.To = to
+        shadow.Color = CrosshairConfig.ShadowColor
+        shadow.Thickness = CrosshairConfig.ShadowThickness
+        shadow.Visible = true
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local espObjects = {}
+
+local function getWeapon(player)
+    if player.Character then
+        local currentHolding = player.Character:FindFirstChild("CurrentHolding")
+        if currentHolding and currentHolding:IsA("Model") then
+            local realNameValue = currentHolding:FindFirstChild("RealName")
+            if realNameValue and realNameValue:IsA("StringValue") then
+                return realNameValue.Value
+            end
+        end
+    end
+    return "None"
+end
+
+local function createESP(player)
+    
+    if espObjects[player] then
+        for _, obj in pairs(espObjects[player]) do
+            obj:Remove()
+        end
+    end
+
+    espObjects[player] = {
+        boxoutline = Drawing.new("Square"),
+        box = Drawing.new("Square"),
+        boxfilled = Drawing.new("Square"),
+        nametag = Drawing.new("Text"),
+        distanceText = Drawing.new("Text"),
+        weaponText = Drawing.new("Text"),
+        healthBarOutline = Drawing.new("Line"),
+        healthBar = Drawing.new("Line"),
+        healthBarText = Drawing.new("Text"),
+    }
+end
+
+
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        player.CharacterAdded:Connect(function()
+            createESP(player)
+        end)
+    end
+end)
+
+
+Players.PlayerRemoving:Connect(function(player)
+    local tbl = espObjects[player]
+    if tbl then
+        for _, obj in pairs(tbl) do
+            obj.Visible = false
+            obj:Remove()
+        end
+        espObjects[player] = nil
+    end
+end)
+
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        createESP(player)
+    end
+end
+
+
+RunService.RenderStepped:Connect(function()
+    for player, objects in pairs(espObjects) do
+
+        if not Players:FindFirstChild(player.Name) then
+            for _, obj in pairs(objects) do
+                obj:Remove()
+            end
+            espObjects[player] = nil
+            continue
+        end
+
+        local char = player.Character
+        if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and player ~= LocalPlayer then
+            local rootPart = char.HumanoidRootPart
+            local humanoid = char.Humanoid
+            local rootPos, onScreen = CurrentCamera:WorldToViewportPoint(rootPart.Position)
+
+            if onScreen then
+                local dist = (rootPart.Position - CurrentCamera.CFrame.Position).Magnitude
+                local scale = math.clamp(1 / dist * 55, 0.1, 100)
+                local size = Vector2.new(40 * scale, 57 * scale)
+                local pos = Vector2.new(rootPos.X - size.X/2, rootPos.Y - size.Y/2)
+
+                
+                local boxoutline = objects.boxoutline
+                boxoutline.Size = size
+                boxoutline.Position = pos
+                boxoutline.Color = settings.Boxoutlinecolor
+                boxoutline.Thickness = settings.boxoutlineThickness
+                boxoutline.Filled = settings.boxoutlineFilled
+                boxoutline.Visible = settings.boxoutlineVisible and dist <= settings.maxDistance
+
+                
+                local box = objects.box
+                box.Size = size
+                box.Position = pos
+                box.Color = settings.boxColor
+                box.Thickness = settings.boxThickness
+                box.Filled = settings.boxFilled
+                box.Visible = settings.boxVisible and dist <= settings.maxDistance
+
+                
+                local boxfilled = objects.boxfilled
+                boxfilled.Size = size
+                boxfilled.Position = pos
+                boxfilled.Color = settings.boxfilledColor
+                boxfilled.Transparency = settings.boxfilledTransparency
+                boxfilled.Filled = settings.boxfilledFilled
+                boxfilled.Visible = settings.boxfilledVisible and dist <= settings.maxDistance
+
+                
+                local nametag = objects.nametag
+                nametag.Position = Vector2.new(rootPos.X, pos.Y - 13)
+                nametag.Text = player.Name
+                nametag.Color = settings.nametagColor
+                nametag.Size = settings.nametagSize
+                nametag.Center = settings.nametagCenter
+                nametag.Outline = settings.nametagOutline
+                nametag.Font = settings.nametagFont
+                nametag.Visible = settings.nametagVisible and dist <= settings.maxDistance
+
+                
+                local distanceText = objects.distanceText
+                distanceText.Position = Vector2.new(rootPos.X, pos.Y + size.Y + 5)
+                distanceText.Text = ("%dm"):format(math.floor(dist))
+                distanceText.Color = settings.distanceTextColor
+                distanceText.Size = settings.distanceTextSize
+                distanceText.Center = settings.distanceTextCenter
+                distanceText.Outline = settings.distanceTextOutline
+                distanceText.Font = settings.distanceTextFont
+                distanceText.Visible = settings.distanceTextVisible and dist <= settings.maxDistance
+
+                
+                local weaponText = objects.weaponText
+                weaponText.Position = Vector2.new(rootPos.X, pos.Y + size.Y + 20)
+                weaponText.Text = getWeapon(player)
+                weaponText.Color = settings.weaponTextColor
+                weaponText.Size = settings.weaponTextSize
+                weaponText.Center = settings.weaponTextCenter
+                weaponText.Outline = settings.weaponTextOutline
+                weaponText.Font = settings.weaponTextFont
+                weaponText.Visible = settings.weaponTextVisible and dist <= settings.maxDistance
+
+                
+                local hp = humanoid.Health / humanoid.MaxHealth
+                local hpHeight = size.Y * hp
+                local hpStart = Vector2.new(pos.X - 4, pos.Y + size.Y)
+                local hpEnd = Vector2.new(pos.X - 4, pos.Y + size.Y - hpHeight)
+
+                local healthBar = objects.healthBar
+                healthBar.From = hpStart
+                healthBar.To = hpEnd
+                healthBar.Color = settings.healthBarColor
+                healthBar.Thickness = settings.healthBarThickness
+                healthBar.Visible = settings.healthBarVisible and dist <= settings.maxDistance
+
+                local healthBarOutline = objects.healthBarOutline
+                healthBarOutline.From = Vector2.new(pos.X - 4, pos.Y + size.Y)
+                healthBarOutline.To = Vector2.new(pos.X - 4, pos.Y)
+                healthBarOutline.Color = settings.healthBarOutlineColor
+                healthBarOutline.Thickness = settings.healthBarOutlineThickness
+                healthBarOutline.Visible = settings.healthBarOutlineVisible and dist <= settings.maxDistance
+
+                local healthBarText = objects.healthBarText
+                healthBarText.Text = tostring(math.floor(humanoid.Health))
+                healthBarText.Position = Vector2.new(pos.X - 13, pos.Y + size.Y - hpHeight)
+                healthBarText.Color = settings.healthbartextcolor
+                healthBarText.Size = settings.healthbartextsize
+                healthBarText.Center = settings.healthbartextcenter
+                healthBarText.Outline = settings.healthbartextoutline
+                healthBarText.Font = settings.healthbartextfont
+                healthBarText.Visible = settings.healthbartextvisible and dist <= settings.maxDistance
+
+            else
+                
+                for _, obj in pairs(objects) do
+                    obj.Visible = false
+                end
+            end
+        else
+            
+            for _, obj in pairs(objects) do
+                obj.Visible = false
+            end
+        end
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+local DistFromCenter = settings.arrowdistFromCenter
+local TriangleHeight = settings.arrowtriangleHeight
+local TriangleWidth = settings.arrowriangleWidth
+local TriangleFilled = settings.arrowtriangleFilled
+local TriangleTransparency = settings.arrowtriangleTransparency
+local TriangleThickness = 1
+local TriangleColor = settings.arrowcolor
+local AntiAliasing = false
+
+
+
+
+
+local V2 = Vector2.new
+local V3 = Vector3.new
+local COS = math.cos
+local SIN = math.sin
+local RAD = math.rad
+local ROUND = math.round
+local DRAWING = Drawing.new
+local CWRAP = coroutine.wrap
+
+local function GetScreenCenter()
+    return CurrentCamera.ViewportSize / 2
+end
+
+local function RotateVect(v, a)
+    a = RAD(a)
+    local x = v.x * COS(a) - v.y * SIN(a)
+    local y = v.x * SIN(a) + v.y * COS(a)
+    return V2(x, y)
+end
+
+local function CreateTriangle()
+    local tri = DRAWING("Triangle")
+    tri.Visible = false
+    tri.Color = TriangleColor
+    tri.Filled = TriangleFilled
+    tri.Thickness = TriangleThickness
+    tri.Transparency = 1 - TriangleTransparency
+    return tri
+end
+
+
+local function AntiA(v)
+    if not AntiAliasing then return v end
+    return V2(ROUND(v.x), ROUND(v.y))
+end
+
+
+local function GetRelativeDirection(targetPos)
+    local camCF = CurrentCamera.CFrame
+    local camPos = camCF.Position
+    local dir = targetPos - camPos
+    local relative = camCF:VectorToObjectSpace(dir)
+
+    return V2(relative.X, relative.Z) 
+end
+
+
+local function ShowArrowForPlayer(targetPlayer)
+    local Arrow = CreateTriangle(TriangleColor)
+
+    local function Update()
+        local conn
+        conn = RunService.RenderStepped:Connect(function()
+            if not targetPlayer or not targetPlayer.Parent then
+                Arrow:Remove()
+                conn:Disconnect()
+                return
+            end
+
+            local char = targetPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                local _, onScreen = CurrentCamera:WorldToViewportPoint(hrp.Position)
+
+                if not onScreen and settings.arrowvisible then
+                    local dir2D = GetRelativeDirection(hrp.Position)
+                    if dir2D.Magnitude > 1 then
+                        local direction = dir2D.Unit
+                        local center = GetScreenCenter()
+
+                        local base = direction * DistFromCenter
+                        local sideLength = TriangleWidth / 2
+                        local baseL = base + RotateVect(direction, 90) * sideLength
+                        local baseR = base + RotateVect(direction, -90) * sideLength
+                        local tip = direction * (DistFromCenter + TriangleHeight)
+
+                        Arrow.PointA = AntiA(center + baseL)
+                        Arrow.PointB = AntiA(center + baseR)
+                        Arrow.PointC = AntiA(center + tip)
+                        Arrow.Visible = true
+                    else
+                        Arrow.Visible = false
+                    end
+                else
+                    Arrow.Visible = false
+                end
+            else
+                Arrow.Visible = false
+            end
+        end)
+    end
+
+    CWRAP(Update)()
+end
+
+
+for _, otherPlayer in ipairs(Players:GetPlayers()) do
+    if otherPlayer ~= Player then
+        ShowArrowForPlayer(otherPlayer)
+    end
+end
+
+
+Players.PlayerAdded:Connect(function(newPlayer)
+    if newPlayer ~= Player then
+        ShowArrowForPlayer(newPlayer)
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local ignoreFolder = Workspace:WaitForChild("Ignore")
+local rigsFolder = ignoreFolder and ignoreFolder:FindFirstChild("Rigs")
+if not rigsFolder then
+    return
+end
+
+
+local originalPartsData = {}
+
+
+local function cacheOriginals(part)
+    for _, obj in ipairs(part:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            originalPartsData[obj] = {
+                Color = obj.Color,
+                Material = obj.Material,
+                Transparency = obj.Transparency
+            }
+            for _, child in ipairs(obj:GetChildren()) do
+                if child:IsA("Texture") or child:IsA("Decal") or child:IsA("TexturePaint") then
+                    originalPartsData[child] = child.Transparency
+                end
+            end
+        end
+    end
+end
+
+
+local function updateChamsAppearance()
+	for _, model in ipairs(rigsFolder:GetChildren()) do
+		local armsFolder = model:FindFirstChild("Arms")
+		if armsFolder then
+			for _, armName in ipairs({"LeftArm", "RightArm"}) do
+				local arm = armsFolder:FindFirstChild(armName)
+				if arm then
+					for _, obj in ipairs(arm:GetDescendants()) do
+						if obj:IsA("BasePart") then
+							obj.Material = Config.Material
+							obj.Color = Config.Color
+							obj.Transparency = Config.Transparency
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+
+local function applyChamsToArm(arm, enabled)
+    for _, obj in ipairs(arm:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            if enabled then
+                obj.Material = Config.Material
+                obj.Color = Config.Color
+                obj.Transparency = Config.Transparency
+            else
+                local orig = originalPartsData[obj]
+                if orig then
+                    obj.Material = orig.Material
+                    obj.Color = orig.Color
+                    obj.Transparency = orig.Transparency
+                end
+            end
+            for _, child in ipairs(obj:GetChildren()) do
+                if child:IsA("Texture") or child:IsA("Decal") or child:IsA("TexturePaint") then
+                    if enabled then
+                        child.Transparency = 1
+                    else
+                        local origTrans = originalPartsData[child]
+                        if origTrans then
+                            child.Transparency = origTrans
+                        else
+                            child.Transparency = 0
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function toggleChams(enabled)
+	for _, model in ipairs(rigsFolder:GetChildren()) do
+		local armsFolder = model:FindFirstChild("Arms")
+		if armsFolder then
+			for _, armName in ipairs({"LeftArm", "RightArm"}) do
+				local arm = armsFolder:FindFirstChild(armName)
+				if arm then
+					if enabled then
+						cacheOriginals(arm)
+					end
+					applyChamsToArm(arm, enabled)
+				end
+			end
+		end
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+local function SpeedControl()
+    RunService.RenderStepped:Connect(function()
+        if not Config.SpeedEnabled then return end
+        if Character and Character:FindFirstChild("HumanoidRootPart") then
+            local MoveDirection = Character.Humanoid.MoveDirection
+            if MoveDirection.Magnitude > 0 then
+                Character.HumanoidRootPart.CFrame = Character.HumanoidRootPart.CFrame + MoveDirection * Config.Speed / 10
+            end
+        end
+    end)
+end
+
+
+SpeedControl()
+
+
+LocalPlayer.CharacterAdded:Connect(function(NewCharacter)
+    Character = NewCharacter
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+end)
+
+
+
+
+
+
+local function ChangeGravity()
+    if Config.Gravity then
+        workspace.Gravity = Config.GravityValue
+    else
+        workspace.Gravity = 196.2 
+    end
+end
+
+
+
+
+
+local function noFog()
+    local lighting = game:GetService("Lighting")
+    local atmosphere = lighting:FindFirstChild("Atmosphere")
+    local bloom = lighting:FindFirstChild("Bloom")
+
+    if Config.nofog then
+        if atmosphere then
+            atmosphere.Density = 0
+        end
+        if bloom then
+            bloom.Enabled = false
+        end
+    else
+        if atmosphere then
+            atmosphere.Density = 0.204
+        end
+        if bloom then
+            bloom.Enabled = true
+        end
+    end
+end
+
+
+
+
+
+
+local function setLeavesVisibility(visible)
+    local treesFolder = workspace:WaitForChild("Ignore"):WaitForChild("Trees")
+    local children = treesFolder:GetChildren()
+
+    for _, treeModel in ipairs(children) do
+        local tree = treeModel:FindFirstChild("Tree")
+        if tree then
+
+            local leavesA = tree:FindFirstChild("Tree_Leaves_A")
+            if leavesA then
+                leavesA.Transparency = visible and 0 or 1
+                leavesA.CanCollide = visible
+            end
+
+            local leavesB = tree:FindFirstChild("Tree_Leaves_B")
+            if leavesB then
+                leavesB.Transparency = visible and 0 or 1
+                leavesB.CanCollide = visible
+            end
+
+            local leavesC = tree:FindFirstChild("Tree_Leaves_C")
+            if leavesC then
+                leavesC.Transparency = visible and 0 or 1
+                leavesC.CanCollide = visible
+            end
+        end
+    end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+local function isAdmin(player)
+    for _, adminName in ipairs(AdminList) do
+        if player.Name == adminName then
+            return true
+        end
+    end
+    return false
+end
+
+
+
+local FoundAdmins = {}
+
+
+local function isAdmin(player)
+    for _, adminName in ipairs(AdminList) do
+        if player.Name == adminName then
+            return true
+        end
+    end
+    return false
+end
+
+
+local function checkAdmins()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if isAdmin(player) and not FoundAdmins[player.Name] then
+            FoundAdmins[player.Name] = true
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 30)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin detected: " .. player.Name, 5)
+            task.wait(0.1)
+            print("[HOLLOWED]Admin detected:", player.Name)
+        end
+    end
+end
+
+
+RunService.RenderStepped:Connect(function()
+    if Config and Config.adminNotify then
+        checkAdmins()
+    else
+        
+        if type(FoundAdmins) ~= "table" then
+            FoundAdmins = {}
+        else
+            for k in pairs(FoundAdmins) do
+                FoundAdmins[k] = nil
+            end
+        end
+    end
+end)
+
+
+Players.PlayerAdded:Connect(function(player)
+    if Config and Config.adminNotify and isAdmin(player) then
+        if not FoundAdmins[player.Name] then
+            FoundAdmins[player.Name] = true
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 30)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 5)
+            task.wait(0.1)
+            Library:Notify("[HOLLOWED]Admin joined: " .. player.Name, 5)
+            task.wait(0.1)
+            print("[HOLLOWED]Admin joined:", player.Name)
+        end
+    end
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local WalkSpeedConnection
+
+local function UpdateWalkSpeed()
+    if WalkSpeedConnection then
+        WalkSpeedConnection:Disconnect()
+        WalkSpeedConnection = nil
+    end
+
+    if Config.WalkSpeedEnabled then
+        WalkSpeedConnection = RunService.RenderStepped:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = Config.WalkSpeed
+                end
+            end
+        end)
+    end
+end
+
+
+
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+
+local JumpPowerConnection
+
+local function UpdateJumpPower()
+    if JumpPowerConnection then
+        JumpPowerConnection:Disconnect()
+        JumpPowerConnection = nil
+    end
+
+    if Config.JumpPowerEnabled then
+        JumpPowerConnection = RunService.RenderStepped:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.JumpPower = Config.JumpPower
+                end
+            end
+        end)
+    end
+end
+
+
+
+
+
+
+
+
+local flyConnection
+
+
+local function setFly(state)
+    local character = game.Players.LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+    Config.flying = state
+
+    if Config.flying then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.PlatformStand = true
+        end
+
+        local root = character.HumanoidRootPart
+        local lastPosition = root.Position
+
+        flyConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            local moveDirection = Vector3.zero
+            local camera = workspace.CurrentCamera
+            local userInput = game:GetService("UserInputService")
+
+            if userInput:IsKeyDown(Enum.KeyCode.W) then
+                moveDirection += camera.CFrame.LookVector
+            end
+            if userInput:IsKeyDown(Enum.KeyCode.S) then
+                moveDirection -= camera.CFrame.LookVector
+            end
+            if userInput:IsKeyDown(Enum.KeyCode.A) then
+                moveDirection -= camera.CFrame.RightVector
+            end
+            if userInput:IsKeyDown(Enum.KeyCode.D) then
+                moveDirection += camera.CFrame.RightVector
+            end
+            if userInput:IsKeyDown(Enum.KeyCode.Space) then
+                moveDirection += Vector3.new(0, 1, 0)
+            end
+            if userInput:IsKeyDown(Enum.KeyCode.LeftControl) then
+                moveDirection -= Vector3.new(0, 1, 0)
+            end
+
+            if moveDirection.Magnitude > 0 then
+                root.Velocity = moveDirection.Unit * Config.flySpeed * 10
+                lastPosition = root.Position
+            else
+                
+                root.Velocity = Vector3.zero
+                root.CFrame = CFrame.new(lastPosition)
+            end
+        end)
+    else
+        if flyConnection then flyConnection:Disconnect() end
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.PlatformStand = false
+        end
+        character.HumanoidRootPart.Velocity = Vector3.zero
+    end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local originalCanCollide = {} 
+
+local character = LocalPlayer.Character or nil
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    character = char
+    originalCanCollide = {}
+
+    
+    repeat task.wait() until character:FindFirstChild("HumanoidRootPart")
+    cacheOriginalCanCollide()
+end)
+
+
+local function cacheOriginalCanCollide()
+    if not character then return end
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            originalCanCollide[part] = part.CanCollide
+        end
+    end
+end
+
+local function updateNoClip()
+    if not character then return end
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            if Config.noclip then
+                part.CanCollide = false
+            elseif originalCanCollide[part] ~= nil then
+                part.CanCollide = originalCanCollide[part]
+            end
+        end
+    end
+end
+
+RunService.Stepped:Connect(function()
+    updateNoClip()
+end)
+
+function setNoClipEnabled(state)
+    Config.noclip = state
+    if state then
+        cacheOriginalCanCollide()
+    end
+end
+
+
+
+
+
+
+
+
+
+
+local containersFolder = workspace:WaitForChild("Interactable"):WaitForChild("Containers")
+
+local containerTexts = {}
+local corpseTexts = {}
+
+local function getPartFromModel(model)
+	for _, v in ipairs(model:GetDescendants()) do
+		if v:IsA("BasePart") then
+			return v
+		end
+	end
+	return nil
+end
+
+local function createTextForContainer(container)
+	if not visibleContainers[container.Name] then return end
+	local basePart = getPartFromModel(container)
+	if not basePart then return end
+
+	local text = Drawing.new("Text")
+	text.Size = Config.cratetextsize
+	text.Center = true
+	text.Outline = true
+	text.Text = container.Name
+	text.Visible = true
+	text.Color = containerColors[container.Name] or Color3.fromRGB(255, 255, 255)
+
+	containerTexts[container] = {
+		text = text,
+		part = basePart
+	}
+end
+
+local function createTextForCorpse(corpse)
+	if not Config.showCorpses then return end
+	local basePart = getPartFromModel(corpse)
+	if not basePart then return end
+
+	local text = Drawing.new("Text")
+	text.Size = Config.cratetextsize
+	text.Center = true
+	text.Outline = true
+	text.Text = corpse.Name
+	text.Visible = true
+	text.Color = Color3.fromRGB(255, 50, 50)
+
+	corpseTexts[corpse] = {
+		text = text,
+		part = basePart
+	}
+end
+
+
+for _, obj in ipairs(containersFolder:GetChildren()) do
+	if obj:IsA("Model") then
+		if string.match(obj.Name, "Corpse$") then
+			createTextForCorpse(obj)
+		else
+			createTextForContainer(obj)
+		end
+	end
+end
+
+containersFolder.ChildAdded:Connect(function(obj)
+	if obj:IsA("Model") then
+		if string.match(obj.Name, "Corpse$") then
+			createTextForCorpse(obj)
+		else
+			createTextForContainer(obj)
+		end
+	end
+end)
+
+containersFolder.ChildRemoved:Connect(function(obj)
+	local crate = containerTexts[obj]
+	if crate then
+		crate.text:Remove()
+		containerTexts[obj] = nil
+	end
+
+	local corpse = corpseTexts[obj]
+	if corpse then
+		corpse.text:Remove()
+		corpseTexts[obj] = nil
+	end
+end)
+
+
+RunService.RenderStepped:Connect(function()
+	for container, data in pairs(containerTexts) do
+		local text, part = data.text, data.part
+		if container and container.Parent and part and part.Parent then
+			local pos, onScreen = CurrentCamera:WorldToViewportPoint(part.Position + Vector3.new(0, 2, 0))
+			local distance = (CurrentCamera.CFrame.Position - part.Position).Magnitude
+			if onScreen and distance <= Config.cratemaxdistance then
+				text.Position = Vector2.new(pos.X, pos.Y)
+				text.Text = Config.cratedistancetext and (container.Name .. " [" .. math.floor(distance) .. "m]") or container.Name
+				text.Visible = true
+				text.Color = containerColors[container.Name] or Color3.fromRGB(255, 255, 255)
+				text.Size = Config.cratetextsize
+			else
+				text.Visible = false
+			end
+		else
+			text:Remove()
+			containerTexts[container] = nil
+		end
+	end
+
+	
+	for corpse, data in pairs(corpseTexts) do
+		local text, part = data.text, data.part
+		if corpse and corpse.Parent and part and part.Parent and Config.showCorpses then
+			local pos, onScreen = CurrentCamera:WorldToViewportPoint(part.Position + Vector3.new(0, 2, 0))
+			local distance = (CurrentCamera.CFrame.Position - part.Position).Magnitude
+			if onScreen and distance <= Config.corpsemaxdistance then
+				text.Position = Vector2.new(pos.X, pos.Y)
+				text.Text = Config.cratedistancetext and (corpse.Name .. " [" .. math.floor(distance) .. "m]") or corpse.Name
+				text.Visible = true
+				text.Color = Config.corpseTextColor
+				text.Size = Config.corpseTextSize
+			else
+				text.Visible = false
+			end
+		else
+			text.Visible = false
+		end
+	end
+end)
+
+
+
+
+
+
+
+
+
+
+RunService.RenderStepped:Connect(function()
+    if Config.ZoomEnabled and CurrentCamera then
+        CurrentCamera.FieldOfView = Config.ZoomValue
+    end
+end)
+
+
+
+
+
+
+
+
+local connectionFullbright
+
+local function applyFullbright()
+    pcall(function()
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 12
+        Lighting.GlobalShadows = false
+        
+        
+        
+    end)
+end
+
+local function onRenderStep()
+    applyFullbright()
+end
+
+local function toggleFullbright()
+    if Config.fullbrightEnabled then
+        if not connectionFullbright then
+            connectionFullbright = RunService.RenderStepped:Connect(onRenderStep)
+        end
+    else
+        if connectionFullbright then
+            connectionFullbright:Disconnect()
+            connectionFullbright = nil
+        end
+    end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local ExtractTexts = {}
+local Ignore = Workspace:FindFirstChild("Ignore")
+local CityMap = Ignore and Ignore:FindFirstChild("CityMap")
+
+
+if CityMap then
+    for _, v in pairs(CityMap:GetChildren()) do
+        if v:IsA("BasePart") and v.Name == "Extract" then
+            local text = Drawing.new("Text")
+            text.Visible = false
+            text.Size = Config.ExtractEnabledTextSize
+            text.Center = Config.ExtractCenter
+            text.Outline = Config.ExtractOutline
+            text.OutlineColor = Config.ExtractOutlineColor
+            text.Color = Config.ExtractColor
+            text.Text = "Extract"
+            ExtractTexts[v] = text
+        end
+    end
+end
+
+
+RunService.RenderStepped:Connect(function()
+    if not Config.ExtractEnabled then
+        for _, text in pairs(ExtractTexts) do
+            text.Visible = false
+        end
+        return
+    end
+
+    for part, text in pairs(ExtractTexts) do
+        if part and part:IsDescendantOf(workspace) then
+            local distance = (part.Position - HumanoidRootPart.Position).Magnitude
+            if distance <= Config.ExtractMaxDistance then
+                local pos, onScreen = CurrentCamera:WorldToViewportPoint(part.Position)
+                if onScreen then
+                    text.Position = Vector2.new(pos.X, pos.Y)
+                    text.Visible = true
+                    text.Color = Config.ExtractColor
+                    text.Outline = Config.ExtractOutline
+                else
+                    text.Visible = false
+                end
+            else
+                text.Visible = false
+            end
+        else
+            text.Visible = false
+        end
+    end
+end)
+
+
+
+
+
+
+
+local playerGui = LocalPlayer.PlayerGui
+
+local perksFolder = playerGui.UI.ZombiesUI.Perks
+
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local oldNewIndex = mt.__newindex
+
+mt.__newindex = newcclosure(function(self, key, value)
+    if self:IsDescendantOf(perksFolder) and key == "Visible" then
+        local perkName = self.Name
+        if perksconfig[perkName] then
+            if value == false then
+                
+                return
+            else
+                return oldNewIndex(self, key, value)
+            end
+        else
+            
+            return oldNewIndex(self, key, value)
+        end
+    end
+    return oldNewIndex(self, key, value)
+end)
+setreadonly(mt, true)
+
+
+local function updatePerkVisibility(perkName, value)
+    perksconfig[perkName] = value
+    local perkGui = perksFolder:FindFirstChild(perkName)
+    if perkGui then
+        perkGui.Visible = value
+    end
+end
+
+
+local function setAllPerksVisibility()
+    for _, child in ipairs(perksFolder:GetChildren()) do
+        if child:IsA("GuiObject") then
+            child.Visible = perksconfig[child.Name] == true
+        end
+    end
+end
+
+setAllPerksVisibility()
+RunService.RenderStepped:Connect(function()
+    setAllPerksVisibility()
+end)
+
+
+perksFolder.ChildAdded:Connect(function(child)
+    if child:IsA("GuiObject") then
+        child.Visible = perksconfig[child.Name] == true
+    end
+end)
+
+
+LocalPlayer.CharacterAdded:Connect(function()
+    wait(4)
+    perksFolder = playerGui.UI.ZombiesUI.Perks
+    setAllPerksVisibility()
+end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+silentleftgroup:AddToggle('silentaimtoggle', {
+    Text = 'Silent Aim',
+    Default = true, 
+    Tooltip = 'Open/Close Silent Aim', 
+
+    Callback = function(Value)
+        print('[cb] silentaimtoggle changed to:', Value)
+    end
+}):AddKeyPicker('silentaimkeypicker', {
+    Default = 'B',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = 'Silent Aim',
+    NoUI = false,
+
+    Callback = function(Value)
+
+    end,
+
+    ChangedCallback = function(New)
+
+    end
+})
+
+
+Toggles.silentaimtoggle:OnChanged(function()
+    Config.SilentAim = Toggles.silentaimtoggle.Value
+end)
+
+
+Toggles.silentaimtoggle:SetValue(false)
+
+
+
+
+
+
+
+silentleftgroup:AddToggle('IncludeNpcs', {
+    Text = 'Include NPCs',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.IncludeNpcs:OnChanged(function()
+
+end)
+
+Toggles.IncludeNpcs:SetValue(false)
+
+
+
+
+
+
+
+
+
+silentleftgroup:AddToggle('WallCheck', {
+    Text = 'Visible Check',
+    Default = false,
+    Tooltip = "may be buggy",
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.WallCheck:OnChanged(function()
+        Config.WallCheck = Toggles.WallCheck.Value 
+end)
+
+Toggles.WallCheck:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+silentleftgroup:AddToggle('AutoShoot', {
+    Text = 'Auto Shoot',
+    Default = true, 
+    Tooltip = "THIS TOGGLE PRESSES MB1 BE CAREFUL!", 
+
+    Callback = function(Value)
+
+    end
+}):AddKeyPicker('AutoShootKey', {
+    Default = 'J',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = 'Auto Shoot',
+    NoUI = false,
+
+    Callback = function(Value)
+
+    end,
+
+    ChangedCallback = function(New)
+
+    end
+})
+
+
+Toggles.AutoShoot:OnChanged(function()
+        Config.AutoFire = Toggles.AutoShoot.Value 
+end)
+
+
+Toggles.AutoShoot:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+silentleftgroup:AddToggle('SilentRandomizer', {
+    Text = 'Randomizer',
+    Default = false,
+    Tooltip = "Random Hitparts",
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.SilentRandomizer:OnChanged(function()
+        Config.RandomizeHitPart = Toggles.SilentRandomizer.Value
+end)
+
+Toggles.SilentRandomizer:SetValue(false)
+
+
+
+silentleftgroup:AddToggle('SilentPrediction', {
+    Text = 'Prediction',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.SilentPrediction:OnChanged(function()
+        Config.Prediction = Toggles.SilentPrediction.Value
+end)
+
+Toggles.SilentPrediction:SetValue(false)
+
+
+
+
+
+silentleftgroup:AddSlider('SilentAimMaxDistance', {
+    Text = 'Max Distance',
+    Default = 1000,
+    Min = 25,
+    Max = 5000,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.SilentAimMaxDistance:OnChanged(function()
+        Config.MaxDistance = Options.SilentAimMaxDistance.Value
+end)
+
+Options.SilentAimMaxDistance:SetValue(1000)
+
+
+
+silentleftgroup:AddSlider('SilentAimPrediction', {
+    Text = 'Prediction Value',
+    Default = 4250,
+    Min = 1000,
+    Max = 7000,
+    Rounding = 1,
+    Compact = false,
+    Tooltip = "as the value decreases, the bullet will go ahead of the man",
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.SilentAimPrediction:OnChanged(function()
+        Config.BulletSpeed = Options.SilentAimPrediction.Value
+end)
+
+Options.SilentAimPrediction:SetValue(4250)
+
+
+
+
+
+
+silentleftgroup:AddSlider('SilentAimHitChance', {
+    Text = 'Hit Chance',
+    Default = 100,
+    Min = 1,
+    Max = 100,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.SilentAimHitChance:OnChanged(function()
+        Config.Hitchance = Options.SilentAimHitChance.Value
+end)
+
+Options.SilentAimHitChance:SetValue(100)
+
+
+
+
+
+
+
+silentleftgroup:AddDropdown('SilentAimHitpart', {
+    Values = {  "Head",
+                "UpperTorso",
+                "LowerTorso",
+                "LeftUpperArm", "LeftLowerArm", "LeftHand",
+                "RightUpperArm", "RightLowerArm", "RightHand",
+                "LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+                "RightUpperLeg", "RightLowerLeg", "RightFoot" 
+            },
+
+    Default = 1,
+    Multi = false,
+
+    Text = 'Hitbox',
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.SilentAimHitpart:OnChanged(function()
+        Config.TargetPart = Options.SilentAimHitpart.Value
+end)
+
+Options.SilentAimHitpart:SetValue('HumanoidRootPart')
+
+
+
+
+
+
+
+
+
+
+
+silentleftgroup:AddToggle('silenthitnotify', {
+    Text = 'Hit Notification',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.silenthitnotify:OnChanged(function()
+        Config.Notify = Toggles.silenthitnotify.Value
+end)
+
+Toggles.silenthitnotify:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+silentleftaltgroup:AddToggle('SilentFovVisible', {
+    Text = 'Fov Visible',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('SilentFovColor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.SilentFovColor:OnChanged(function()
+        Config.FOVCircleColor = Options.SilentFovColor.Value
+end)
+
+Options.SilentFovColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.SilentFovVisible:OnChanged(function()
+        Config.FOVCircleVisible = Toggles.SilentFovVisible.Value
+end)
+
+Toggles.SilentFovVisible:SetValue(false)
+
+
+
+
+
+
+
+silentleftaltgroup:AddToggle('SilentFovDynamic', {
+    Text = 'Dynamic Fov',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.SilentFovDynamic:OnChanged(function()
+        
+end)
+
+Toggles.SilentFovDynamic:SetValue(false)
+
+
+
+
+
+
+
+
+
+silentleftaltgroup:AddToggle('SilentSnapline', {
+    Text = 'Snapline',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('SilentSnaplineColor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.SilentSnaplineColor:OnChanged(function()
+        Config.SnapLineColor = Options.SilentSnaplineColor.Value
+end)
+
+Options.SilentSnaplineColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.SilentSnapline:OnChanged(function()
+        Config.SnapLineVisible = Toggles.SilentSnapline.Value
+end)
+
+Toggles.SilentSnapline:SetValue(false)
+
+
+
+
+
+
+
+
+silentleftaltgroup:AddToggle('SilentHighlight', {
+    Text = 'Highlight',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('SilentHighlightColor1', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('SilentHighlightColor2', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.SilentHighlightColor1:OnChanged(function()
+        Config.HighlightColor = Options.SilentHighlightColor1.Value
+end)
+
+Options.SilentHighlightColor1:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Options.SilentHighlightColor2:OnChanged(function()
+        Config.HighlightOutlineColor = Options.SilentHighlightColor2.Value
+end)
+
+Options.SilentHighlightColor2:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.SilentHighlight:OnChanged(function()
+        Config.HighlightEnabled = Toggles.SilentHighlight.Value
+end)
+
+Toggles.SilentHighlight:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+silentleftaltgroup:AddSlider('SilentFovRadius', {
+    Text = 'Fov Radius',
+    Default = 100,
+    Min = 1,
+    Max = 500,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.SilentFovRadius:OnChanged(function()
+        Config.FOVCircleRadius = Options.SilentFovRadius.Value
+end)
+
+Options.SilentFovRadius:SetValue(100)
+
+
+
+
+
+silentleftaltgroup:AddSlider('highlighttransparency', {
+    Text = 'Highlight Transparency',
+    Default = 0.75,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.highlighttransparency:OnChanged(function()
+        Config.HighlightFillTransparency = Options.highlighttransparency.Value
+end)
+
+Options.highlighttransparency:SetValue(0.75)
+
+
+
+
+
+
+
+
+
+
+
+
+
+silentrightgroup:AddToggle('SilentNoSpread', {
+    Text = 'No Spread',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.SilentNoSpread:OnChanged(function()
+        Config.NoSpread = Toggles.SilentNoSpread.Value
+end)
+
+Toggles.SilentNoSpread:SetValue(false)
+
+
+silentrightgroup:AddToggle('Silentinstahit', {
+    Text = 'Insta Hit',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.Silentinstahit:OnChanged(function()
+        Config.instaHit = Toggles.Silentinstahit.Value
+end)
+
+Toggles.Silentinstahit:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+silentrightaltgroup:AddToggle('SilentTargetName', {
+    Text = 'Target Name',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.SilentTargetName:OnChanged(function()
+        Config.TargetInfoName = Toggles.SilentTargetName.Value
+end)
+
+Toggles.SilentTargetName:SetValue(false)
+
+
+
+
+
+
+
+
+
+silentrightaltgroup:AddToggle('SilentTargetHealth', {
+    Text = 'Target Health',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.SilentTargetHealth:OnChanged(function()
+        Config.TargetInfoHealth = Toggles.SilentTargetHealth.Value
+end)
+
+Toggles.SilentTargetHealth:SetValue(false)
+
+
+
+
+
+
+
+silentrightaltgroup:AddToggle('SilentTargetAdmin', {
+    Text = 'Target Admin',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.SilentTargetAdmin:OnChanged(function()
+        Config.TargetInfoAdmin = Toggles.SilentTargetAdmin.Value
+end)
+
+Toggles.SilentTargetAdmin:SetValue(false)
+
+
+
+silentrightaltgroup:AddToggle('SilentTargetVisible', {
+    Text = 'Target Visible',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.SilentTargetVisible:OnChanged(function()
+        Config.TargetInfoVisible = Toggles.SilentTargetVisible.Value
+end)
+
+Toggles.SilentTargetVisible:SetValue(false)
+
+
+
+
+silentrightaltgroup:AddSlider('SilentTargetTextSize', {
+    Text = 'Text Size',
+    Default = 18,
+    Min = 1,
+    Max = 50,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.SilentTargetTextSize:OnChanged(function()
+        Config.TargetInfoSize = Options.SilentTargetTextSize.Value
+end)
+
+Options.SilentTargetTextSize:SetValue(18)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+visualsleftgroup:AddToggle('boxesptoggle', {
+    Text = 'Box',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('boxespcolor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.boxespcolor:OnChanged(function()
+        settings.boxColor = Options.boxespcolor.Value
+end)
+
+Options.boxespcolor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.boxesptoggle:OnChanged(function()
+        settings.boxVisible = Toggles.boxesptoggle.Value
+        settings.boxoutlineVisible = Toggles.boxesptoggle.Value
+end)
+
+Toggles.boxesptoggle:SetValue(false)
+
+
+
+
+
+visualsleftgroup:AddToggle('boxfilledesptoggle', {
+    Text = 'Box Filled',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('boxfilledespcolor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.boxfilledespcolor:OnChanged(function()
+        settings.boxfilledColor = Options.boxfilledespcolor.Value
+end)
+
+Options.boxfilledespcolor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.boxfilledesptoggle:OnChanged(function()
+        settings.boxfilledVisible = Toggles.boxfilledesptoggle.Value
+end)
+
+Toggles.boxfilledesptoggle:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+visualsleftgroup:AddToggle('healthbartoggle', {
+    Text = 'Health Bar',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('HealthBarColor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.HealthBarColor:OnChanged(function()
+        settings.healthBarColor = Options.HealthBarColor.Value
+end)
+
+Options.HealthBarColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.healthbartoggle:OnChanged(function()
+        settings.healthBarVisible = Toggles.healthbartoggle.Value
+        settings.healthBarOutlineVisible = Toggles.healthbartoggle.Value
+end)
+
+Toggles.healthbartoggle:SetValue(false)
+
+
+
+
+
+
+
+visualsleftgroup:AddToggle('healthtexttoggle', {
+    Text = 'Health Text',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('HealthtextColor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.HealthtextColor:OnChanged(function()
+        settings.healthbartextcolor = Options.HealthtextColor.Value
+end)
+
+Options.HealthtextColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.healthtexttoggle:OnChanged(function()
+        settings.healthbartextvisible = Toggles.healthtexttoggle.Value
+        settings.healthbartextoutline = Toggles.healthtexttoggle.Value
+end)
+
+Toggles.healthtexttoggle:SetValue(false)
+
+
+
+
+
+
+
+
+
+visualsleftgroup:AddToggle('nametagtoggle', {
+    Text = 'Name',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('nametagColor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.nametagColor:OnChanged(function()
+        settings.nametagColor = Options.nametagColor.Value
+end)
+
+Options.nametagColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.nametagtoggle:OnChanged(function()
+        settings.nametagVisible = Toggles.nametagtoggle.Value
+end)
+
+Toggles.nametagtoggle:SetValue(false)
+
+
+
+
+
+
+visualsleftgroup:AddToggle('distancetoggle', {
+    Text = 'Distance',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('DistanceColor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.DistanceColor:OnChanged(function()
+        settings.distanceTextColor = Options.DistanceColor.Value
+end)
+
+Options.DistanceColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.distancetoggle:OnChanged(function()
+        settings.distanceTextVisible = Toggles.distancetoggle.Value
+end)
+
+Toggles.distancetoggle:SetValue(false)
+
+
+
+
+visualsleftgroup:AddToggle('arrowstogle', {
+    Text = 'Arrows',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.arrowstogle:OnChanged(function()
+        settings.arrowvisible = Toggles.arrowstogle.Value
+end)
+
+Toggles.arrowstogle:SetValue(false)
+
+
+
+
+
+
+
+
+visualsleftgroup:AddDivider()
+
+
+
+
+
+
+visualsleftgroup:AddToggle('corpsetext', {
+    Text = 'Corpse Text',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('corpsetextcolor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.corpsetextcolor:OnChanged(function()
+        Config.corpseTextColor = Options.corpsetextcolor.Value
+end)
+
+Options.corpsetextcolor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.corpsetext:OnChanged(function()
+        Config.showCorpses = Toggles.corpsetext.Value
+end)
+
+Toggles.corpsetext:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+visualsleftgroup:AddToggle('exitesp', {
+    Text = 'Exit Text',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('exitespcolor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.exitespcolor:OnChanged(function()
+        Config.ExtractColor = Options.exitespcolor.Value
+end)
+
+Options.exitespcolor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.exitesp:OnChanged(function()
+        Config.ExtractEnabled = Toggles.exitesp.Value
+end)
+
+Toggles.exitesp:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+visualsleftgroup:AddDivider()
+
+
+
+
+
+visualsleftgroup:AddSlider('Boxfilledtransparency', {
+    Text = 'Filled Transparency',
+    Default = 0,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.Boxfilledtransparency:OnChanged(function()
+        settings.boxfilledTransparency = Options.Boxfilledtransparency.Value
+end)
+
+Options.Boxfilledtransparency:SetValue(0)
+
+
+
+
+
+visualsleftgroup:AddSlider('Espmaxdist', {
+    Text = 'Max Distance',
+    Default = 1000,
+    Min = 25,
+    Max = 10000,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.Espmaxdist:OnChanged(function()
+        settings.maxDistance = Options.Espmaxdist.Value
+end)
+
+Options.Espmaxdist:SetValue(1000)
+
+
+
+visualsleftgroup:AddSlider('corpseMaxdistance', {
+    Text = 'Corpse Max Dist',
+    Default = 1000,
+    Min = 25,
+    Max = 10000,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.corpseMaxdistance:OnChanged(function()
+        Config.corpsemaxdistance = Options.corpseMaxdistance.Value
+end)
+
+Options.corpseMaxdistance:SetValue(1000)
+
+
+
+
+
+visualsleftgroup:AddSlider('extractmaxdistance', {
+    Text = 'Exit Max Dist',
+    Default = 1000,
+    Min = 25,
+    Max = 10000,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.extractmaxdistance:OnChanged(function()
+        Config.ExtractMaxDistance = Options.extractmaxdistance.Value
+end)
+
+Options.extractmaxdistance:SetValue(1000)
+
+
+
+
+
+
+
+
+visualsleftgroup:AddSlider('EspTextSize', {
+    Text = 'Text Size',
+    Default = 9,
+    Min = 1,
+    Max = 25,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.EspTextSize:OnChanged(function()
+        settings.distanceTextSize = Options.EspTextSize.Value
+        settings.nametagSize = Options.EspTextSize.Value
+        settings.healthbartextsize = Options.EspTextSize.Value
+        Config.corpseTextSize = Options.EspTextSize.Value
+        Config.ExtractEnabledTextSize = Options.EspTextSize.Value
+end)
+
+Options.EspTextSize:SetValue(9)
+
+
+
+
+visualsleftgroup:AddToggle('textoutlinetoggle', {
+    Text = 'Text Outline',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Toggles.textoutlinetoggle:OnChanged(function()
+        settings.distanceTextOutline = Toggles.textoutlinetoggle.Value
+        settings.nametagOutline = Toggles.textoutlinetoggle.Value
+        settings.healthbartextoutline = Toggles.textoutlinetoggle.Value
+        Config.ExtractOutline = Toggles.textoutlinetoggle.Value
+end)
+
+Toggles.textoutlinetoggle:SetValue(true)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+visualsleftaltgroup:AddToggle('ArmChams', {
+    Text = 'Arm Chams',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('ArmChamsColor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.ArmChamsColor:OnChanged(function()
+        Config.Color = Options.ArmChamsColor.Value
+        if Config.Enabled then
+		updateChamsAppearance()
+	    end
+end)
+
+Options.ArmChamsColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.ArmChams:OnChanged(function()
+        Config.Enabled = Toggles.ArmChams.Value
+        toggleChams(Toggles.ArmChams.Value)
+            if Config.Enabled then
+		    updateChamsAppearance()
+	        end
+end)
+
+Toggles.ArmChams:SetValue(false)
+
+
+
+
+
+
+
+
+
+visualsleftaltgroup:AddDropdown('armchamsmaterial', {
+    Values = { 'Neon', 'ForceField', 'Plastic','SmoothPlastic', 'Glass', 'Metal', 'Slate' },
+    Default = 1,
+    Multi = false,
+
+    Text = 'Arm Chams Material',
+    Tooltip = "i would prefer forcefield ngl",
+
+    Callback = function(Value)
+        Config.Material = Options.armchamsmaterial.Value
+        if Config.Enabled then
+		updateChamsAppearance()
+	    end
+    end
+})
+
+Options.armchamsmaterial:OnChanged(function()
+
+end)
+
+Options.armchamsmaterial:SetValue('Neon')
+
+
+
+
+visualsleftaltgroup:AddSlider('armchamstransparency', {
+    Text = 'Transparency',
+    Default = 0,
+    Min = 0,
+    Max = 1,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.armchamstransparency:OnChanged(function()
+        Config.Transparency = Options.armchamstransparency.Value
+        	if Config.Enabled then
+		    updateChamsAppearance()
+	        end
+end)
+
+Options.armchamstransparency:SetValue(0)
+
+
+
+
+
+
+
+
+visualsrightgroup:AddToggle('Tactical511TransportCrateT1', {
+    Text = 'Tactical Transport Crate T1',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('Tactical511TransportCrateT1Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.Tactical511TransportCrateT1Color:OnChanged(function()
+    containerColors["511 Tactical Transport Crate T1"] = Options.Tactical511TransportCrateT1Color.Value
+end)
+
+Options.Tactical511TransportCrateT1Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.Tactical511TransportCrateT1:OnChanged(function()
+    visibleContainers["511 Tactical Transport Crate T1"] = Toggles.Tactical511TransportCrateT1.Value
+
+    local containerModel = containersFolder:FindFirstChild("511 Tactical Transport Crate T1")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.Tactical511TransportCrateT1.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.Tactical511TransportCrateT1:SetValue(false)
+
+
+
+
+
+visualsrightgroup:AddToggle('Tactical511TransportCrateT2', {
+    Text = 'Tactical Transport Crate T2',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('Tactical511TransportCrateT2Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.Tactical511TransportCrateT2Color:OnChanged(function()
+    containerColors["511 Tactical Transport Crate T2"] = Options.Tactical511TransportCrateT2Color.Value
+end)
+
+Options.Tactical511TransportCrateT2Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.Tactical511TransportCrateT2:OnChanged(function()
+    visibleContainers["511 Tactical Transport Crate T2"] = Toggles.Tactical511TransportCrateT2.Value
+
+    local containerModel = containersFolder:FindFirstChild("511 Tactical Transport Crate T2")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.Tactical511TransportCrateT2.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.Tactical511TransportCrateT2:SetValue(false)
+
+
+visualsrightgroup:AddToggle('Tactical511TransportCrateT3', {
+    Text = 'Tactical Transport Crate T3',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('Tactical511TransportCrateT3Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.Tactical511TransportCrateT3Color:OnChanged(function()
+    containerColors["511 Tactical Transport Crate T3"] = Options.Tactical511TransportCrateT3Color.Value
+end)
+
+Options.Tactical511TransportCrateT3Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.Tactical511TransportCrateT3:OnChanged(function()
+    visibleContainers["511 Tactical Transport Crate T3"] = Toggles.Tactical511TransportCrateT3.Value
+
+    local containerModel = containersFolder:FindFirstChild("511 Tactical Transport Crate T3")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.Tactical511TransportCrateT3.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.Tactical511TransportCrateT3:SetValue(false)
+
+
+
+
+visualsrightgroup:AddToggle('CardboardBox', {
+    Text = 'Cardboard Box',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('CardboardBoxColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.CardboardBoxColor:OnChanged(function()
+    containerColors["Cardboard Box"] = Options.CardboardBoxColor.Value
+end)
+
+Options.CardboardBoxColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.CardboardBox:OnChanged(function()
+    visibleContainers["Cardboard Box"] = Toggles.CardboardBox.Value
+
+    local containerModel = containersFolder:FindFirstChild("Cardboard Box")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.CardboardBox.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.CardboardBox:SetValue(false)
+
+
+visualsrightgroup:AddToggle('CultCrate', {
+    Text = 'Cult Crate',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('CultCrateColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.CultCrateColor:OnChanged(function()
+    containerColors["Cult Crate"] = Options.CultCrateColor.Value
+    print(containerColors["Cult Crate"])
+end)
+
+Options.CultCrateColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.CultCrate:OnChanged(function()
+    visibleContainers["Cult Crate"] = Toggles.CultCrate.Value
+
+    local containerModel = containersFolder:FindFirstChild("Cult Crate")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.CultCrate.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.CultCrate:SetValue(false)
+
+
+visualsrightgroup:AddToggle('CultChest', {
+    Text = 'Cult Chest',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('CultChestColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.CultChestColor:OnChanged(function()
+    containerColors["Cult Chest"] = Options.CultChestColor.Value
+end)
+
+Options.CultChestColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.CultChest:OnChanged(function()
+    visibleContainers["Cult Chest"] = Toggles.CultChest.Value
+
+    local containerModel = containersFolder:FindFirstChild("Cult Chest")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.CultChest.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.CultChest:SetValue(false)
+
+
+visualsrightgroup:AddToggle('EasternCivilianRifleCaseT1', {
+    Text = 'Civilian Rifle Case T1',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('EasternCivilianRifleCaseT1Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value)
+        containerColors["Eastern Civilian Rifle Case T1"] = Value
+        print(containerColors["Eastern Civilian Rifle Case T1"])
+    
+    end
+})
+
+Options.EasternCivilianRifleCaseT1Color:OnChanged(function()
+    
+    
+end)
+
+Options.EasternCivilianRifleCaseT1Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.EasternCivilianRifleCaseT1:OnChanged(function()
+    visibleContainers["Eastern Civilian Rifle Case T1"] = Toggles.EasternCivilianRifleCaseT1.Value
+
+    local containerModel = containersFolder:FindFirstChild("Eastern Civilian Rifle Case T1")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.EasternCivilianRifleCaseT1.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.EasternCivilianRifleCaseT1:SetValue(false)
+
+
+visualsrightgroup:AddToggle('EasternCivilianRifleCaseT2', {
+    Text = 'Civilian Rifle Case T2',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('EasternCivilianRifleCaseT2Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.EasternCivilianRifleCaseT2Color:OnChanged(function()
+    containerColors["Eastern Civilian Rifle Case T2"] = Options.EasternCivilianRifleCaseT2Color.Value
+end)
+
+Options.EasternCivilianRifleCaseT2Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.EasternCivilianRifleCaseT2:OnChanged(function()
+    visibleContainers["Eastern Civilian Rifle Case T2"] = Toggles.EasternCivilianRifleCaseT2.Value
+
+    local containerModel = containersFolder:FindFirstChild("Eastern Civilian Rifle Case T2")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.EasternCivilianRifleCaseT2.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.EasternCivilianRifleCaseT2:SetValue(false)
+
+
+visualsrightgroup:AddToggle('EasternCivilianRifleCaseT3', {
+    Text = 'Civilian Rifle Case T3',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('EasternCivilianRifleCaseT3Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.EasternCivilianRifleCaseT3Color:OnChanged(function()
+    containerColors["Eastern Civilian Rifle Case T3"] = Options.EasternCivilianRifleCaseT3Color.Value
+end)
+
+Options.EasternCivilianRifleCaseT3Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.EasternCivilianRifleCaseT3:OnChanged(function()
+    visibleContainers["Eastern Civilian Rifle Case T3"] = Toggles.EasternCivilianRifleCaseT3.Value
+
+    local containerModel = containersFolder:FindFirstChild("Eastern Civilian Rifle Case T3")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.EasternCivilianRifleCaseT3.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.EasternCivilianRifleCaseT3:SetValue(false)
+
+
+visualsrightgroup:AddToggle('OMONEquipmentCrateT1', {
+    Text = 'OMON Equipment Crate T1',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('OMONEquipmentCrateT1Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.OMONEquipmentCrateT1Color:OnChanged(function()
+    containerColors["OMON Equipment Crate T1"] = Options.OMONEquipmentCrateT1Color.Value
+end)
+
+Options.OMONEquipmentCrateT1Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.OMONEquipmentCrateT1:OnChanged(function()
+    visibleContainers["OMON Equipment Crate T1"] = Toggles.OMONEquipmentCrateT1.Value
+
+    local containerModel = containersFolder:FindFirstChild("OMON Equipment Crate T1")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.OMONEquipmentCrateT1.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.OMONEquipmentCrateT1:SetValue(false)
+
+
+visualsrightgroup:AddToggle('OMONEquipmentCrateT2', {
+    Text = 'OMON Equipment Crate T2',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('OMONEquipmentCrateT2Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.OMONEquipmentCrateT2Color:OnChanged(function()
+    containerColors["OMON Equipment Crate T2"] = Options.OMONEquipmentCrateT2Color.Value
+end)
+
+Options.OMONEquipmentCrateT2Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.OMONEquipmentCrateT2:OnChanged(function()
+    visibleContainers["OMON Equipment Crate T2"] = Toggles.OMONEquipmentCrateT2.Value
+
+    local containerModel = containersFolder:FindFirstChild("OMON Equipment Crate T2")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.OMONEquipmentCrateT2.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.OMONEquipmentCrateT2:SetValue(false)
+
+
+visualsrightgroup:AddToggle('RUAFSurplusCrateT1', {
+    Text = 'RUAF Surplus Crate T1',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('RUAFSurplusCrateT1Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.RUAFSurplusCrateT1Color:OnChanged(function()
+    containerColors["RUAF Surplus Crate T1"] = Options.RUAFSurplusCrateT1Color.Value
+end)
+
+Options.RUAFSurplusCrateT1Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.RUAFSurplusCrateT1:OnChanged(function()
+    visibleContainers["RUAF Surplus Crate T1"] = Toggles.RUAFSurplusCrateT1.Value
+
+    local containerModel = containersFolder:FindFirstChild("RUAF Surplus Crate T1")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.RUAFSurplusCrateT1.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.RUAFSurplusCrateT1:SetValue(false)
+
+
+visualsrightgroup:AddToggle('RUAFSurplusCrateT2', {
+    Text = 'RUAF Surplus Crate T2',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('RUAFSurplusCrateT2Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.RUAFSurplusCrateT2Color:OnChanged(function()
+    containerColors["RUAF Surplus Crate T2"] = Options.RUAFSurplusCrateT2Color.Value
+end)
+
+Options.RUAFSurplusCrateT2Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.RUAFSurplusCrateT2:OnChanged(function()
+    visibleContainers["RUAF Surplus Crate T2"] = Toggles.RUAFSurplusCrateT2.Value
+
+    local containerModel = containersFolder:FindFirstChild("RUAF Surplus Crate T2")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.RUAFSurplusCrateT2.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.RUAFSurplusCrateT2:SetValue(false)
+
+
+visualsrightgroup:AddToggle('RUAFSurplusCrateT3', {
+    Text = 'RUAF Surplus Crate T3',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('RUAFSurplusCrateT3Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.RUAFSurplusCrateT3Color:OnChanged(function()
+    containerColors["RUAF Surplus Crate T3"] = Options.RUAFSurplusCrateT3Color.Value
+end)
+
+Options.RUAFSurplusCrateT3Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.RUAFSurplusCrateT3:OnChanged(function()
+    visibleContainers["RUAF Surplus Crate T3"] = Toggles.RUAFSurplusCrateT3.Value
+
+    local containerModel = containersFolder:FindFirstChild("RUAF Surplus Crate T3")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.RUAFSurplusCrateT3.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.RUAFSurplusCrateT3:SetValue(false)
+
+
+visualsrightgroup:AddToggle('RUAFSurplusCrateT4', {
+    Text = 'RUAF Surplus Crate T4',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('RUAFSurplusCrateT4Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.RUAFSurplusCrateT4Color:OnChanged(function()
+    containerColors["RUAF Surplus Crate T4"] = Options.RUAFSurplusCrateT4Color.Value
+end)
+
+Options.RUAFSurplusCrateT4Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.RUAFSurplusCrateT4:OnChanged(function()
+    visibleContainers["RUAF Surplus Crate T4"] = Toggles.RUAFSurplusCrateT4.Value
+
+    local containerModel = containersFolder:FindFirstChild("RUAF Surplus Crate T4")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.RUAFSurplusCrateT4.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.RUAFSurplusCrateT4:SetValue(false)
+
+
+visualsrightgroup:AddToggle('RUAFSurplusCrateT5', {
+    Text = 'RUAF Surplus Crate T5',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('RUAFSurplusCrateT5Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.RUAFSurplusCrateT5Color:OnChanged(function()
+    containerColors["RUAF Surplus Crate T5"] = Options.RUAFSurplusCrateT5Color.Value
+end)
+
+Options.RUAFSurplusCrateT5Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.RUAFSurplusCrateT5:OnChanged(function()
+    visibleContainers["RUAF Surplus Crate T5"] = Toggles.RUAFSurplusCrateT5.Value
+
+    local containerModel = containersFolder:FindFirstChild("RUAF Surplus Crate T5")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.RUAFSurplusCrateT5.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.RUAFSurplusCrateT5:SetValue(false)
+
+visualsrightgroup:AddToggle('ConductorLockBox', {
+    Text = 'Conductor Lock Box',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('ConductorLockBoxColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.ConductorLockBoxColor:OnChanged(function()
+    containerColors["Conductor Lock Box"] = Options.ConductorLockBoxColor.Value
+end)
+
+Options.ConductorLockBoxColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.ConductorLockBox:OnChanged(function()
+    visibleContainers["Conductor Lock Box"] = Toggles.ConductorLockBox.Value
+
+    local containerModel = containersFolder:FindFirstChild("Conductor Lock Box")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.ConductorLockBox.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.ConductorLockBox:SetValue(false)
+
+visualsrightgroup:AddToggle('ConductorPrivateLockBox', {
+    Text = 'Conductor Private Lock Box',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('ConductorPrivateLockBoxColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.ConductorPrivateLockBoxColor:OnChanged(function()
+    containerColors["Conductor Private Lock Box"] = Options.ConductorPrivateLockBoxColor.Value
+end)
+
+Options.ConductorPrivateLockBoxColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.ConductorPrivateLockBox:OnChanged(function()
+    visibleContainers["Conductor Private Lock Box"] = Toggles.ConductorPrivateLockBox.Value
+
+    local containerModel = containersFolder:FindFirstChild("Conductor Private Lock Box")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.ConductorPrivateLockBox.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.ConductorPrivateLockBox:SetValue(false)
+
+visualsrightgroup:AddToggle('AegisWeaponTestingWingStorageCrate', {
+    Text = 'Aegis Weapon Storage Crate',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('AegisWeaponTestingWingStorageCrateColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.AegisWeaponTestingWingStorageCrateColor:OnChanged(function()
+    containerColors["Aegis Weapon Testing Wing Storage Crate"] = Options.AegisWeaponTestingWingStorageCrateColor.Value
+end)
+
+Options.AegisWeaponTestingWingStorageCrateColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.AegisWeaponTestingWingStorageCrate:OnChanged(function()
+    visibleContainers["Aegis Weapon Testing Wing Storage Crate"] = Toggles.AegisWeaponTestingWingStorageCrate.Value
+
+    local containerModel = containersFolder:FindFirstChild("Aegis Weapon Testing Wing Storage Crate")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.AegisWeaponTestingWingStorageCrate.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.AegisWeaponTestingWingStorageCrate:SetValue(false)
+
+visualsrightgroup:AddToggle('EquipmentSupplyDrop', {
+    Text = 'Equipment Supply Drop',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('EquipmentSupplyDropColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.EquipmentSupplyDropColor:OnChanged(function()
+    containerColors["Equipment Supply Drop"] = Options.EquipmentSupplyDropColor.Value
+end)
+
+Options.EquipmentSupplyDropColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.EquipmentSupplyDrop:OnChanged(function()
+    visibleContainers["Equipment Supply Drop"] = Toggles.EquipmentSupplyDrop.Value
+
+    local containerModel = containersFolder:FindFirstChild("Equipment Supply Drop")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.EquipmentSupplyDrop.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.EquipmentSupplyDrop:SetValue(false)
+
+visualsrightgroup:AddToggle('EvidenceBox', {
+    Text = 'Evidence Box',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('EvidenceBoxColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.EvidenceBoxColor:OnChanged(function()
+    containerColors["Evidence Box"] = Options.EvidenceBoxColor.Value
+end)
+
+Options.EvidenceBoxColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.EvidenceBox:OnChanged(function()
+    visibleContainers["Evidence Box"] = Toggles.EvidenceBox.Value
+
+    local containerModel = containersFolder:FindFirstChild("Evidence Box")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.EvidenceBox.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.EvidenceBox:SetValue(false)
+
+visualsrightgroup:AddToggle('MREContainer', {
+    Text = 'MRE Container',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('MREContainerColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.MREContainerColor:OnChanged(function()
+    containerColors["MRE Container"] = Options.MREContainerColor.Value
+end)
+
+Options.MREContainerColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.MREContainer:OnChanged(function()
+    visibleContainers["MRE Container"] = Toggles.MREContainer.Value
+
+    local containerModel = containersFolder:FindFirstChild("MRE Container")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.MREContainer.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.MREContainer:SetValue(false)
+
+visualsrightgroup:AddToggle('TreasureBox', {
+    Text = 'Treasure Box',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('TreasureBoxColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.TreasureBoxColor:OnChanged(function()
+    containerColors["Treasure Box"] = Options.TreasureBoxColor.Value
+end)
+
+Options.TreasureBoxColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.TreasureBox:OnChanged(function()
+    visibleContainers["Treasure Box"] = Toggles.TreasureBox.Value
+
+    local containerModel = containersFolder:FindFirstChild("Treasure Box")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.TreasureBox.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.TreasureBox:SetValue(false)
+
+visualsrightgroup:AddToggle('UtilitySupplyDrop', {
+    Text = 'Utility Supply Drop',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('UtilitySupplyDropColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.UtilitySupplyDropColor:OnChanged(function()
+    containerColors["Utility Supply Drop"] = Options.UtilitySupplyDropColor.Value
+end)
+
+Options.UtilitySupplyDropColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.UtilitySupplyDrop:OnChanged(function()
+    visibleContainers["Utility Supply Drop"] = Toggles.UtilitySupplyDrop.Value
+
+    local containerModel = containersFolder:FindFirstChild("Utility Supply Drop")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.UtilitySupplyDrop.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.UtilitySupplyDrop:SetValue(false)
+
+visualsrightgroup:AddToggle('WeaponSupplyDrop', {
+    Text = 'Weapon Supply Drop',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('WeaponSupplyDropColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.WeaponSupplyDropColor:OnChanged(function()
+    containerColors["Weapon Supply Drop"] = Options.WeaponSupplyDropColor.Value
+end)
+
+Options.WeaponSupplyDropColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.WeaponSupplyDrop:OnChanged(function()
+    visibleContainers["Weapon Supply Drop"] = Toggles.WeaponSupplyDrop.Value
+
+    local containerModel = containersFolder:FindFirstChild("Weapon Supply Drop")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.WeaponSupplyDrop.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.WeaponSupplyDrop:SetValue(false)
+
+visualsrightgroup:AddToggle('WeaponSupplyDropT5', {
+    Text = 'Weapon Supply Drop T5',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('WeaponSupplyDropT5Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.WeaponSupplyDropT5Color:OnChanged(function()
+    containerColors["Weapon Supply Drop T5"] = Options.WeaponSupplyDropT5Color.Value
+end)
+
+Options.WeaponSupplyDropT5Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.WeaponSupplyDropT5:OnChanged(function()
+    visibleContainers["Weapon Supply Drop T5"] = Toggles.WeaponSupplyDropT5.Value
+
+    local containerModel = containersFolder:FindFirstChild("Weapon Supply Drop T5")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.WeaponSupplyDropT5.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.WeaponSupplyDropT5:SetValue(false)
+
+visualsrightgroup:AddToggle('WeaponsModificationsSupplyDrop', {
+    Text = 'Weapons Modify Supply Drop',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('WeaponsModificationsSupplyDropColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.WeaponsModificationsSupplyDropColor:OnChanged(function()
+    containerColors["Weapons & Modifications Supply Drop"] = Options.WeaponsModificationsSupplyDropColor.Value
+end)
+
+Options.WeaponsModificationsSupplyDropColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.WeaponsModificationsSupplyDrop:OnChanged(function()
+    visibleContainers["Weapons & Modifications Supply Drop"] = Toggles.WeaponsModificationsSupplyDrop.Value
+
+    local containerModel = containersFolder:FindFirstChild("Weapons & Modifications Supply Drop")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.WeaponsModificationsSupplyDrop.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.WeaponsModificationsSupplyDrop:SetValue(false)
+
+visualsrightgroup:AddToggle('FilthyToiletTank', {
+    Text = 'Filthy Toilet Tank',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('FilthyToiletTankColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.FilthyToiletTankColor:OnChanged(function()
+    containerColors["Filthy Toilet Tank"] = Options.FilthyToiletTankColor.Value
+end)
+
+Options.FilthyToiletTankColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.FilthyToiletTank:OnChanged(function()
+    visibleContainers["Filthy Toilet Tank"] = Toggles.FilthyToiletTank.Value
+
+    local containerModel = containersFolder:FindFirstChild("Filthy Toilet Tank")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.FilthyToiletTank.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.FilthyToiletTank:SetValue(false)
+
+visualsrightgroup:AddToggle('HMSSeaturtleBlackMarketCargo', {
+    Text = 'HMS Black Market Cargo',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('HMSSeaturtleBlackMarketCargoColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.HMSSeaturtleBlackMarketCargoColor:OnChanged(function()
+    containerColors["HMS Seaturtle Black Market Cargo"] = Options.HMSSeaturtleBlackMarketCargoColor.Value
+end)
+
+Options.HMSSeaturtleBlackMarketCargoColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.HMSSeaturtleBlackMarketCargo:OnChanged(function()
+    visibleContainers["HMS Seaturtle Black Market Cargo"] = Toggles.HMSSeaturtleBlackMarketCargo.Value
+
+    local containerModel = containersFolder:FindFirstChild("HMS Seaturtle Black Market Cargo")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.HMSSeaturtleBlackMarketCargo.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.HMSSeaturtleBlackMarketCargo:SetValue(false)
+
+visualsrightgroup:AddToggle('KitchenCabinet', {
+    Text = 'Kitchen Cabinet',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('KitchenCabinetColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.KitchenCabinetColor:OnChanged(function()
+    containerColors["Kitchen Cabinet"] = Options.KitchenCabinetColor.Value
+end)
+
+Options.KitchenCabinetColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.KitchenCabinet:OnChanged(function()
+    visibleContainers["Kitchen Cabinet"] = Toggles.KitchenCabinet.Value
+
+    local containerModel = containersFolder:FindFirstChild("Kitchen Cabinet")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.KitchenCabinet.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.KitchenCabinet:SetValue(false)
+
+visualsrightgroup:AddToggle('LongCrate', {
+    Text = 'Long Crate',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('LongCrateColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.LongCrateColor:OnChanged(function()
+    containerColors["Long Crate"] = Options.LongCrateColor.Value
+end)
+
+Options.LongCrateColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.LongCrate:OnChanged(function()
+    visibleContainers["Long Crate"] = Toggles.LongCrate.Value
+
+    local containerModel = containersFolder:FindFirstChild("Long Crate")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.LongCrate.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.LongCrate:SetValue(false)
+
+visualsrightgroup:AddToggle('MedicalShippingCrate', {
+    Text = 'Medical Shipping Crate',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('MedicalShippingCrateColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.MedicalShippingCrateColor:OnChanged(function()
+    containerColors["Medical Shipping Crate"] = Options.MedicalShippingCrateColor.Value
+end)
+
+Options.MedicalShippingCrateColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.MedicalShippingCrate:OnChanged(function()
+    visibleContainers["Medical Shipping Crate"] = Toggles.MedicalShippingCrate.Value
+
+    local containerModel = containersFolder:FindFirstChild("Medical Shipping Crate")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.MedicalShippingCrate.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.MedicalShippingCrate:SetValue(false)
+
+visualsrightgroup:AddToggle('MedicalSupplyDrop', {
+    Text = 'Medical Supply Drop',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('MedicalSupplyDropColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.MedicalSupplyDropColor:OnChanged(function()
+    containerColors["Medical Supply Drop"] = Options.MedicalSupplyDropColor.Value
+end)
+
+Options.MedicalSupplyDropColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.MedicalSupplyDrop:OnChanged(function()
+    visibleContainers["Medical Supply Drop"] = Toggles.MedicalSupplyDrop.Value
+
+    local containerModel = containersFolder:FindFirstChild("Medical Supply Drop")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.MedicalSupplyDrop.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.MedicalSupplyDrop:SetValue(false)
+
+visualsrightgroup:AddToggle('MysteryBox', {
+    Text = 'Mystery Box',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('MysteryBoxColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.MysteryBoxColor:OnChanged(function()
+    containerColors["Mystery Box"] = Options.MysteryBoxColor.Value
+end)
+
+Options.MysteryBoxColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.MysteryBox:OnChanged(function()
+    visibleContainers["Mystery Box"] = Toggles.MysteryBox.Value
+
+    local containerModel = containersFolder:FindFirstChild("Mystery Box")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.MysteryBox.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.MysteryBox:SetValue(false)
+
+visualsrightgroup:AddToggle('NATORifleCaseT3', {
+    Text = 'NATO Rifle Case T3',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('NATORifleCaseT3Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.NATORifleCaseT3Color:OnChanged(function()
+    containerColors["NATO Rifle Case T3"] = Options.NATORifleCaseT3Color.Value
+end)
+
+Options.NATORifleCaseT3Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.NATORifleCaseT3:OnChanged(function()
+    visibleContainers["NATO Rifle Case T3"] = Toggles.NATORifleCaseT3.Value
+
+    local containerModel = containersFolder:FindFirstChild("NATO Rifle Case T3")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.NATORifleCaseT3.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.NATORifleCaseT3:SetValue(false)
+
+visualsrightgroup:AddToggle('PillowCover', {
+    Text = 'Pillow Cover',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('PillowCoverColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.PillowCoverColor:OnChanged(function()
+    containerColors["Pillow Cover"] = Options.PillowCoverColor.Value
+end)
+
+Options.PillowCoverColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.PillowCover:OnChanged(function()
+    visibleContainers["Pillow Cover"] = Toggles.PillowCover.Value
+
+    local containerModel = containersFolder:FindFirstChild("Pillow Cover")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.PillowCover.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.PillowCover:SetValue(false)
+
+visualsrightgroup:AddToggle('ShippingCrate', {
+    Text = 'Shipping Crate',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('ShippingCrateColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.ShippingCrateColor:OnChanged(function()
+    containerColors["Shipping Crate"] = Options.ShippingCrateColor.Value
+end)
+
+Options.ShippingCrateColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.ShippingCrate:OnChanged(function()
+    visibleContainers["Shipping Crate"] = Toggles.ShippingCrate.Value
+
+    local containerModel = containersFolder:FindFirstChild("Shipping Crate")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.ShippingCrate.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.ShippingCrate:SetValue(false)
+
+visualsrightgroup:AddToggle('Toolbox', {
+    Text = 'Toolbox',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('ToolboxColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.ToolboxColor:OnChanged(function()
+    containerColors["Toolbox"] = Options.ToolboxColor.Value
+end)
+
+Options.ToolboxColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.Toolbox:OnChanged(function()
+    visibleContainers["Toolbox"] = Toggles.Toolbox.Value
+
+    local containerModel = containersFolder:FindFirstChild("Toolbox")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.Toolbox.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.Toolbox:SetValue(false)
+
+visualsrightgroup:AddToggle('WeaponModificationCrate', {
+    Text = 'Weapon Modify Crate',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('WeaponModificationCrateColor', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.WeaponModificationCrateColor:OnChanged(function()
+    containerColors["Weapon Modification Crate"] = Options.WeaponModificationCrateColor.Value
+end)
+
+Options.WeaponModificationCrateColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.WeaponModificationCrate:OnChanged(function()
+    visibleContainers["Weapon Modification Crate"] = Toggles.WeaponModificationCrate.Value
+
+    local containerModel = containersFolder:FindFirstChild("Weapon Modification Crate")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.WeaponModificationCrate.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.WeaponModificationCrate:SetValue(false)
+
+visualsrightgroup:AddToggle('WeaponModificationCrateT6', {
+    Text = 'Weapon Modify Crate T6',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('WeaponModificationCrateT6Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.WeaponModificationCrateT6Color:OnChanged(function()
+    containerColors["Weapon Modification Crate T6"] = Options.WeaponModificationCrateT6Color.Value
+end)
+
+Options.WeaponModificationCrateT6Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.WeaponModificationCrateT6:OnChanged(function()
+    visibleContainers["Weapon Modification Crate T6"] = Toggles.WeaponModificationCrateT6.Value
+
+    local containerModel = containersFolder:FindFirstChild("Weapon Modification Crate T6")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.WeaponModificationCrateT6.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.WeaponModificationCrateT6:SetValue(false)
+
+visualsrightgroup:AddToggle('ZSUSurplusCrateT5', {
+    Text = 'ZSU Surplus Crate T5',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('ZSUSurplusCrateT5Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.ZSUSurplusCrateT5Color:OnChanged(function()
+    containerColors["ZSU Surplus Crate T5"] = Options.ZSUSurplusCrateT5Color.Value
+end)
+
+Options.ZSUSurplusCrateT5Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.ZSUSurplusCrateT5:OnChanged(function()
+    visibleContainers["ZSU Surplus Crate T5"] = Toggles.ZSUSurplusCrateT5.Value
+
+    local containerModel = containersFolder:FindFirstChild("ZSU Surplus Crate T5")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.ZSUSurplusCrateT5.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.ZSUSurplusCrateT5:SetValue(false)
+
+
+visualsrightgroup:AddToggle('ZSUSurplusCrateT6', {
+    Text = 'ZSU Surplus Crate T6',
+    Default = false,
+    Tooltip = nil,
+    Callback = function(Value) end
+}):AddColorPicker('ZSUSurplusCrateT6Color', {
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(Value) end
+})
+
+Options.ZSUSurplusCrateT6Color:OnChanged(function()
+    containerColors["ZSU Surplus Crate T6"] = Options.ZSUSurplusCrateT6Color.Value
+end)
+
+Options.ZSUSurplusCrateT6Color:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+Toggles.ZSUSurplusCrateT6:OnChanged(function()
+    visibleContainers["ZSU Surplus Crate T6"] = Toggles.ZSUSurplusCrateT6.Value
+
+    local containerModel = containersFolder:FindFirstChild("ZSU Surplus Crate T6")
+    if containerModel and containerModel:IsA("Model") then
+        if Toggles.ZSUSurplusCrateT6.Value then
+            createTextForContainer(containerModel)
+        else
+            local entry = containerTexts[containerModel]
+            if entry then
+                entry.text:Remove()
+                containerTexts[containerModel] = nil
+            end
+        end
+    end
+end)
+
+Toggles.ZSUSurplusCrateT6:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+visualsrightgroup:AddDivider()
+
+
+
+
+
+visualsrightgroup:AddToggle('cratedistancetext', {
+    Text = 'Distance Text',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+Toggles.cratedistancetext:OnChanged(function()
+        Config.cratedistancetext = Toggles.cratedistancetext.Value
+end)
+
+Toggles.cratedistancetext:SetValue(false)
+
+
+
+
+
+
+visualsrightgroup:AddSlider('CrateEspSize', {
+    Text = 'Size',
+    Default = 9,
+    Min = 1,
+    Max = 30,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.CrateEspSize:OnChanged(function()
+        Config.cratetextsize = Options.CrateEspSize.Value
+end)
+
+Options.CrateEspSize:SetValue(9)
+
+
+visualsrightgroup:AddSlider('CrateEspDistance', {
+    Text = 'Distance',
+    Default = 250,
+    Min = 100,
+    Max = 10000,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.CrateEspDistance:OnChanged(function()
+        Config.cratemaxdistance = Options.CrateEspDistance.Value
+end)
+
+Options.CrateEspDistance:SetValue(4)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+visualsrightmidgroup:AddToggle('Bullettracers', {
+    Text = 'Bullet Tracers',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('Bullettracerscolor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+
+Options.Bullettracerscolor:OnChanged(function()
+        Config.TracersColor = Options.Bullettracerscolor.Value
+end)
+
+Options.Bullettracerscolor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Toggles.Bullettracers:OnChanged(function()
+        Config.TracersVisible = Toggles.Bullettracers.Value
+end)
+
+Toggles.Bullettracers:SetValue(false)
+
+
+
+
+
+
+
+visualsrightmidgroup:AddDropdown('Bullettracerstexture', {
+    Values = { '1', '2', '3','4', '5', '6', '7', '8', '9' },
+    Default = 1,
+    Multi = false,
+
+    Text = 'Tracer Texture',
+    Tooltip = nil,
+
+    Callback = function(Value)
+        Config.TracersTexture = TracerTextures[Value]
+    end
+})
+
+Options.Bullettracerstexture:OnChanged(function()
+            print(Options.Bullettracerstexture.Value)
+end)
+
+Options.Bullettracerstexture:SetValue('1')
+
+
+
+
+visualsrightmidgroup:AddSlider('tracerlifetime', {
+    Text = 'Tracer Lifetime',
+    Default = 4,
+    Min = 1,
+    Max = 15,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.tracerlifetime:OnChanged(function()
+        Config.TracersLifetime = Options.tracerlifetime.Value
+end)
+
+Options.tracerlifetime:SetValue(4)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+visualsleftaltaltgroup:AddToggle('Crosshairenable', {
+    Text = 'Crosshair',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('CrosshairColor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+}):AddColorPicker('CrosshairShadowColor', {
+    Default = Color3.fromRGB(255, 255, 255), 
+    Title = nil, 
+    Transparency = nil, 
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.CrosshairColor:OnChanged(function()
+        CrosshairConfig.Color = Options.CrosshairColor.Value
+end)
+
+Options.CrosshairColor:SetValueRGB(Color3.fromRGB(255, 255, 255))
+
+
+Options.CrosshairShadowColor:OnChanged(function()
+        CrosshairConfig.ShadowColor = Options.CrosshairShadowColor.Value
+end)
+
+Options.CrosshairShadowColor:SetValueRGB(Color3.fromRGB(0, 0, 0))
+
+
+Toggles.Crosshairenable:OnChanged(function()
+        CrosshairConfig.Enabled = Toggles.Crosshairenable.Value
+end)
+
+Toggles.Crosshairenable:SetValue(false)
+
+
+
+visualsleftaltaltgroup:AddToggle('CrosshairRotate', {
+    Text = 'Always Rotate',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+})
+
+
+
+Toggles.CrosshairRotate:OnChanged(function()
+        CrosshairConfig.AlwaysRotate = Toggles.CrosshairRotate.Value
+end)
+
+Toggles.CrosshairRotate:SetValue(false)
+
+
+
+
+
+visualsleftaltaltgroup:AddSlider('CrosshairLength', {
+    Text = 'Length',
+    Default = 8,
+    Min = 1,
+    Max = 35,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.CrosshairLength:OnChanged(function()
+        CrosshairConfig.Length = Options.CrosshairLength.Value
+end)
+
+Options.CrosshairLength:SetValue(8)
+
+
+visualsleftaltaltgroup:AddSlider('CrosshairGap', {
+    Text = 'Gap',
+    Default = 5,
+    Min = 1,
+    Max = 20,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.CrosshairGap:OnChanged(function()
+        CrosshairConfig.Gap = Options.CrosshairGap.Value
+end)
+
+Options.CrosshairGap:SetValue(5)
+
+
+
+visualsleftaltaltgroup:AddSlider('CrosshairSpeed', {
+    Text = 'Rotate Speed',
+    Default = 1,
+    Min = 1,
+    Max = 50,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.CrosshairSpeed:OnChanged(function()
+        CrosshairConfig.RotationSpeed = Options.CrosshairSpeed.Value
+end)
+
+Options.CrosshairSpeed:SetValue(1)
+
+
+
+
+
+visualsleftaltaltgroup:AddSlider('CrosshairThickness', {
+    Text = 'Thickness',
+    Default = 1,
+    Min = 0.1,
+    Max = 5,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.CrosshairThickness:OnChanged(function()
+        CrosshairConfig.Thickness = Options.CrosshairThickness.Value
+end)
+
+Options.CrosshairThickness:SetValue(1)
+
+
+visualsleftaltaltgroup:AddSlider('CrosshairShadowThickness', {
+    Text = 'Shadow Thickness',
+    Default = 3,
+    Min = 0.1,
+    Max = 7,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.CrosshairShadowThickness:OnChanged(function()
+        CrosshairConfig.ShadowThickness = Options.CrosshairShadowThickness.Value
+end)
+
+Options.CrosshairShadowThickness:SetValue(3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+miscleftgroup:AddToggle('fly', {
+    Text = 'Fly',
+    Default = false,
+    Tooltip = "bypassed so dont worry",
+
+    Callback = function(Value)
+        
+    end
+}):AddKeyPicker('flyKey', {
+    Default = 'G',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = 'Fly',
+    NoUI = false,
+
+    Callback = function(Value)
+
+    end,
+
+    ChangedCallback = function(New)
+
+    end
+})
+
+
+Toggles.fly:OnChanged(function()
+        setFly(Toggles.fly.Value)
+end)
+
+Toggles.fly:SetValue(false)
+
+
+
+
+miscleftgroup:AddSlider('Flyspeed', {
+    Text = 'Speed',
+    Default = 25,
+    Min = 1,
+    Max = 500,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+        Config.flySpeed = Value
+    end
+})
+
+Options.Flyspeed:OnChanged(function()
+
+end)
+
+Options.Flyspeed:SetValue(25)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+miscleftgroup:AddToggle('WalkSpeed', {
+    Text = 'Walk Speed',
+    Default = false,
+    Tooltip = "bypassed so dont worry",
+
+    Callback = function(Value)
+        
+    end
+}):AddKeyPicker('walkspeedkey', {
+    Default = 'Z',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = 'WalkSpeed',
+    NoUI = false,
+
+    Callback = function(Value)
+
+    end,
+
+    ChangedCallback = function(New)
+
+    end
+})
+
+
+Toggles.WalkSpeed:OnChanged(function()
+        Config.WalkSpeedEnabled = Toggles.WalkSpeed.Value
+        UpdateWalkSpeed()
+end)
+
+Toggles.WalkSpeed:SetValue(false)
+
+
+
+
+miscleftgroup:AddSlider('Walkspeedspeed', {
+    Text = 'Speed',
+    Default = 25,
+    Min = 1,
+    Max = 1000,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+        Config.WalkSpeed = Value
+        UpdateWalkSpeed()
+    end
+})
+
+Options.Walkspeedspeed:OnChanged(function()
+
+end)
+
+Options.Walkspeedspeed:SetValue(25)
+
+
+
+
+
+
+
+
+
+
+miscleftgroup:AddToggle('Jumppower', {
+    Text = 'Jump Power',
+    Default = false,
+    Tooltip = "bypassed so dont worry",
+
+    Callback = function(Value)
+        
+    end
+}):AddKeyPicker('jumppowerkey', {
+    Default = 'Z',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = 'Jump Power',
+    NoUI = false,
+
+    Callback = function(Value)
+
+    end,
+
+    ChangedCallback = function(New)
+
+    end
+})
+
+
+Toggles.Jumppower:OnChanged(function()
+        Config.JumpPowerEnabled = Toggles.Jumppower.Value
+        UpdateJumpPower()
+end)
+
+
+Toggles.Jumppower:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+miscleftgroup:AddSlider('jumppowerpower', {
+    Text = 'Power',
+    Default = 25,
+    Min = 1,
+    Max = 500,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.jumppowerpower:OnChanged(function()
+        Config.JumpPower = Options.jumppowerpower.Value
+        UpdateJumpPower()
+end)
+
+Options.jumppowerpower:SetValue(25)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+miscleftgroup:AddDivider()
+
+
+
+
+
+
+
+local AdminCheckConnection
+
+
+miscleftgroup:AddToggle('adminnotify', {
+    Text = 'Admin Checker',
+    Default = false,
+    Tooltip = "Gives Notify when Admin joined or Found in server :)",
+
+    Callback = function(Value)
+            Config.adminNotify = Value
+    end
+
+})
+
+
+Toggles.adminnotify:OnChanged(function()
+
+end)
+
+Toggles.adminnotify:SetValue(false)
+
+
+
+
+
+
+miscleftgroup:AddToggle('noclip', {
+    Text = 'No Clip',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+           setNoClipEnabled(Value)
+           Config.noclip = Value
+    end
+
+}):AddKeyPicker('noclipkey', {
+    Default = 'K',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = 'NoClip',
+    NoUI = false,
+
+    Callback = function(Value)
+
+    end,
+
+    ChangedCallback = function(New)
+
+    end
+})
+
+
+Toggles.noclip:OnChanged(function()
+
+end)
+
+Toggles.noclip:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+miscleftgroup:AddToggle('ZoomToggle', {
+    Text = 'Zoom',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+        
+    end
+}):AddKeyPicker('zoomkey', {
+    Default = 'X',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = 'Zoom',
+    NoUI = false,
+
+    Callback = function(Value)
+
+    end,
+
+    ChangedCallback = function(New)
+
+    end
+})
+
+
+Toggles.ZoomToggle:OnChanged(function()
+        Config.ZoomEnabled = Toggles.ZoomToggle.Value
+end)
+
+Toggles.ZoomToggle:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+miscleftgroup:AddSlider('zoomvalue', {
+    Text = 'Zoom Value',
+    Default = 40,
+    Min = 1,
+    Max = 180,
+    Rounding = 1,
+    Compact = false,
+
+    Callback = function(Value)
+
+    end
+})
+
+Options.zoomvalue:OnChanged(function()
+        Config.ZoomValue = Options.zoomvalue.Value
+end)
+
+Options.zoomvalue:SetValue(40)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+miscrightgroup:AddToggle('deadshotperk', {
+    Text = 'Deadshot',
+    Default = false,
+    Tooltip = "Removes ADS Sway. Removes hipfire point sway.",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.deadshotperk:OnChanged(function()
+        perksconfig.Deadshot = Toggles.deadshotperk.Value
+end)
+
+Toggles.deadshotperk:SetValue(false)
+
+
+
+
+miscrightgroup:AddToggle('doubletapperk', {
+    Text = 'Double Tap',
+    Default = false,
+    Tooltip = "Increases RPM by 33% and allows all guns to be used in Auto",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.doubletapperk:OnChanged(function()
+        perksconfig.DoubleTap = Toggles.doubletapperk.Value
+end)
+
+Toggles.doubletapperk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('ElectricCherryperk', {
+    Text = 'ElectricCherry',
+    Default = false,
+    Tooltip = "Increases bolting speed by 50% & 2.5% chance to remove a mag quicker during a reload",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.ElectricCherryperk:OnChanged(function()
+        perksconfig.ElectricCherry = Toggles.ElectricCherryperk.Value
+end)
+
+Toggles.ElectricCherryperk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('Juggernogperk', {
+    Text = 'Juggernog',
+    Default = false,
+    Tooltip = "Increases max health to 1850. Reduces Armour Damage by 19%",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.Juggernogperk:OnChanged(function()
+        perksconfig.Juggernog = Toggles.Juggernogperk.Value
+end)
+
+Toggles.Juggernogperk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('MuleKickperk', {
+    Text = 'MuleKick',
+    Default = false,
+    Tooltip = "Turns Toolbelt slot into Primary & Sidearm slot",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.MuleKickperk:OnChanged(function()
+        perksconfig.MuleKick = Toggles.MuleKickperk.Value
+end)
+
+Toggles.MuleKickperk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('PHDFlopperperk', {
+    Text = 'PHDFlopper',
+    Default = false,
+    Tooltip = "Removes 4k Radiation and no longer receives fractures from falling",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.PHDFlopperperk:OnChanged(function()
+        perksconfig.PHDFlopper = Toggles.PHDFlopperperk.Value
+end)
+
+Toggles.PHDFlopperperk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('QuickReviveperk', {
+    Text = 'QuickRevive',
+    Default = false,
+    Tooltip = "Increases healing animations by 50%",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.QuickReviveperk:OnChanged(function()
+        perksconfig.QuickRevive = Toggles.QuickReviveperk.Value
+end)
+
+Toggles.QuickReviveperk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('SpeedColaperk', {
+    Text = 'SpeedCola',
+    Default = false,
+    Tooltip = "Increases reload animation speed by 50% & increases item equip speed by 20%",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.SpeedColaperk:OnChanged(function()
+        perksconfig.SpeedCola = Toggles.SpeedColaperk.Value
+end)
+
+Toggles.SpeedColaperk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('StaminupPerk', {
+    Text = 'StaminUp',
+    Default = false,
+    Tooltip = "Increases movement speed by 7% and returns Stamina Regen Multi to 20 from 5",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.StaminupPerk:OnChanged(function()
+        perksconfig.StaminUp = Toggles.StaminupPerk.Value
+end)
+
+Toggles.StaminupPerk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('Tombstoneperk', {
+    Text = 'Tombstone',
+    Default = false,
+    Tooltip = "Changes perk slot limit from 4 to 6",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.Tombstoneperk:OnChanged(function()
+        perksconfig.Tombstone = Toggles.Tombstoneperk.Value
+end)
+
+Toggles.Tombstoneperk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('VultureAidPerk', {
+    Text = 'VultureAid',
+    Default = false,
+    Tooltip = "Increases max nvg bat to 12760 & Loot All (Shift + F)",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.VultureAidPerk:OnChanged(function()
+        perksconfig.VultureAid = Toggles.VultureAidPerk.Value
+end)
+
+Toggles.VultureAidPerk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('WhosWhoPerk', {
+    Text = 'WhosWho',
+    Default = false,
+    Tooltip = "Divides battery drain speed by 1.5. Reduces NVG / FLIR grain",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.WhosWhoPerk:OnChanged(function()
+        perksconfig.WhosWho = Toggles.WhosWhoPerk.Value
+end)
+
+Toggles.WhosWhoPerk:SetValue(false)
+
+
+
+miscrightgroup:AddToggle('WidowsWinePerk', {
+    Text = 'WidowsWine',
+    Default = false,
+    Tooltip = "Removes radiation from consumables",
+
+    Callback = function(Value)
+            
+    end
+
+})
+
+
+Toggles.WidowsWinePerk:OnChanged(function()
+        perksconfig.WidowsWine = Toggles.WidowsWinePerk.Value
+end)
+
+Toggles.WidowsWinePerk:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+worldleftgroup:AddToggle('NoFog', {
+    Text = 'No Fog',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+         Config.nofog = Value
+         noFog()
+    end
+
+})
+
+
+Toggles.NoFog:OnChanged(function()
+
+end)
+
+Toggles.NoFog:SetValue(false)
+
+
+
+worldleftgroup:AddToggle('NoLeaves', {
+    Text = 'No Leaves',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+
+})
+
+
+Toggles.NoLeaves:OnChanged(function()
+
+end)
+
+Toggles.NoLeaves:SetValue(false)
+
+
+
+
+
+
+
+
+worldleftgroup:AddToggle('fullbright', {
+    Text = 'FullBright',
+    Default = false,
+    Tooltip = nil,
+
+    Callback = function(Value)
+
+    end
+
+})
+
+
+Toggles.fullbright:OnChanged(function()
+        Config.fullbrightEnabled = Toggles.fullbright.Value
+        toggleFullbright()
+end)
+
+Toggles.fullbright:SetValue(false)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Library:SetWatermarkVisibility(true)
+
+
+local FrameTimer = tick()
+local FrameCounter = 0;
+local FPS = 60;
+
+local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
+    FrameCounter += 1;
+
+    if (tick() - FrameTimer) >= 1 then
+        FPS = FrameCounter;
+        FrameTimer = tick();
+        FrameCounter = 0;
+    end;
+
+    Library:SetWatermark(('Hollowed.win | %s fps | %s ms'):format(
+        math.floor(FPS),
+        math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
+    ));
+end);
+
+Library.KeybindFrame.Visible = true; 
+
+Library:OnUnload(function()
+    WatermarkConnection:Disconnect()
+
+    print('see you later')
+    Library.Unloaded = true
+end)
+
+
+local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+
+
+MenuGroup:AddButton('Unload', function() Library:Unload() end)
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
+
+Library.ToggleKeybind = Options.MenuKeybind 
+
+
+
+
+
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+
+
+
+
+
+
+
+SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+
+
+
+
+ThemeManager:SetFolder('Hollowed')
+SaveManager:SetFolder('Hollowed/the state of anarchy')
+
+
+SaveManager:BuildConfigSection(Tabs['UI Settings'])
+
+
+
+ThemeManager:ApplyToTab(Tabs['UI Settings'])
+
+
+
+SaveManager:LoadAutoloadConfig()
